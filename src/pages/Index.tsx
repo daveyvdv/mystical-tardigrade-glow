@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { CompositionGuideType, PhotographyMode, CapturedPhoto } from '../types/camera';
 import { Header } from '../components/Header';
 import { CameraView } from '../components/CameraView';
 import { PhotoReviewModal } from '../components/PhotoReviewModal';
 import { AcademyModal } from '../components/AcademyModal';
+import { AchievementsModal } from '../components/AchievementsModal';
+import { PhotoComparisonModal } from '../components/PhotoComparisonModal';
 import { Gallery } from '../components/Gallery';
+import { calculateAchievements } from '../utils/achievements';
 import { MadeWithDyad } from '../components/made-with-dyad';
 import { showSuccess } from '../utils/toast';
 
@@ -14,7 +17,15 @@ const Index: React.FC = () => {
   
   const [photos, setPhotos] = useState<CapturedPhoto[]>([]);
   const [activePhoto, setActivePhoto] = useState<CapturedPhoto | null>(null);
+  
+  const [comparePair, setComparePair] = useState<{ photoA: CapturedPhoto; photoB: CapturedPhoto } | null>(null);
+
   const [isAcademyOpen, setIsAcademyOpen] = useState<boolean>(false);
+  const [isAchievementsOpen, setIsAchievementsOpen] = useState<boolean>(false);
+
+  // Dynamic achievement calculations
+  const achievements = useMemo(() => calculateAchievements(photos), [photos]);
+  const unlockedBadgeCount = achievements.filter((a) => a.unlocked).length;
 
   const handlePhotoCaptured = (photo: CapturedPhoto) => {
     setPhotos((prev) => [photo, ...prev]);
@@ -47,7 +58,9 @@ const Index: React.FC = () => {
       <Header
         photoCount={photos.length}
         averageScore={averageScore}
+        unlockedBadgeCount={unlockedBadgeCount}
         onOpenAcademy={() => setIsAcademyOpen(true)}
+        onOpenAchievements={() => setIsAchievementsOpen(true)}
       />
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-6 space-y-6">
@@ -60,6 +73,7 @@ const Index: React.FC = () => {
             setMode={setMode}
             onPhotoCaptured={handlePhotoCaptured}
             onOpenAcademy={() => setIsAcademyOpen(true)}
+            onOpenAchievements={() => setIsAchievementsOpen(true)}
           />
         </section>
 
@@ -69,6 +83,7 @@ const Index: React.FC = () => {
             photos={photos}
             onSelectPhoto={(photo) => setActivePhoto(photo)}
             onClearAll={handleClearAll}
+            onComparePhotos={(photoA, photoB) => setComparePair({ photoA, photoB })}
           />
         </section>
       </main>
@@ -80,11 +95,25 @@ const Index: React.FC = () => {
         onDelete={handleDeletePhoto}
       />
 
+      {/* Side-by-side Photo Comparison Dialog */}
+      <PhotoComparisonModal
+        photoA={comparePair?.photoA || null}
+        photoB={comparePair?.photoB || null}
+        onClose={() => setComparePair(null)}
+      />
+
       {/* Interactive Masterclass & Lessons Dialog */}
       <AcademyModal
         isOpen={isAcademyOpen}
         onClose={() => setIsAcademyOpen(false)}
         onApplyLesson={handleApplyLesson}
+      />
+
+      {/* Photographer Mastery Badges Dialog */}
+      <AchievementsModal
+        isOpen={isAchievementsOpen}
+        onClose={() => setIsAchievementsOpen(false)}
+        achievements={achievements}
       />
 
       <footer className="border-t border-slate-800/80 py-4 mt-8">

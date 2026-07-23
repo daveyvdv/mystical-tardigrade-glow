@@ -1,14 +1,22 @@
 import React from 'react';
-import { Camera, BookOpen, Sparkles, Award } from 'lucide-react';
+import { Camera, BookOpen, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   photoCount: number;
   averageScore: number;
+  unlockedBadgeCount: number;
   onOpenAcademy: () => void;
+  onOpenAchievements: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ photoCount, averageScore, onOpenAcademy }) => {
+export const Header: React.FC<HeaderProps> = ({
+  photoCount,
+  averageScore,
+  unlockedBadgeCount,
+  onOpenAcademy,
+  onOpenAchievements,
+}) => {
   return (
     <header className="w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
       <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -22,17 +30,17 @@ export const Header: React.FC<HeaderProps> = ({ photoCount, averageScore, onOpen
               FrameCraft <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-semibold font-mono">Pro Camera</span>
             </h1>
             <p className="text-[11px] text-slate-400 hidden sm:block">
-              Composition Guides • Real-Time Lighting • Photo Scorecard
+              Composition Guides • Live Histogram • Pro Tuning • Photo Scorecard
             </p>
           </div>
         </div>
 
         {/* Stats & Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {photoCount > 0 && (
             <div className="hidden sm:flex items-center gap-3 bg-slate-800/80 px-3 py-1 rounded-xl border border-slate-700/80 text-xs">
               <div>
-                <span className="text-slate-400 block text-[10px]">Shots Taken</span>
+                <span className="text-slate-400 block text-[10px]">Shots</span>
                 <span className="font-mono font-bold text-slate-200">{photoCount}</span>
               </div>
               <div className="h-6 w-[1px] bg-slate-700" />
@@ -45,6 +53,15 @@ export const Header: React.FC<HeaderProps> = ({ photoCount, averageScore, onOpen
               </div>
             </div>
           )}
+
+          <Button
+            variant="outline"
+            onClick={onOpenAchievements}
+            className="bg-slate-800 hover:bg-slate-700 border-slate-700 text-amber-300 font-semibold text-xs h-9 px-3"
+          >
+            <Award className="w-4 h-4 mr-1 text-amber-400" />
+            Badges ({unlockedBadgeCount})
+          </Button>
 
           <Button
             onClick={onOpenAcademy}

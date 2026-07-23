@@ -1,23 +1,19 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { CompositionGuideType, PhotographyMode, CapturedPhoto } from '../types/camera';
+import { CompositionGuideType, PhotographyMode, CapturedPhoto, CameraManualSettings } from '../types/camera';
 import { CompositionGuides } from './CompositionGuides';
 import { LightingHistogram } from './LightingHistogram';
 import { CoachOverlay } from './CoachOverlay';
+import { ManualControls } from './ManualControls';
 import { analyzeCanvasLuminance, generatePhotoScore, ImageLuminanceData } from '../utils/imageAnalysis';
 import {
   Camera,
-  Grid,
   Sun,
   RotateCcw,
   BookOpen,
   Image as ImageIcon,
   Sliders,
-  Sparkles,
-  Focus,
-  Eye,
   SwitchCamera,
-  Zap,
-  Maximize2
+  Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -30,9 +26,9 @@ interface CameraViewProps {
   setMode: (mode: PhotographyMode) => void;
   onPhotoCaptured: (photo: CapturedPhoto) => void;
   onOpenAcademy: () => void;
+  onOpenAchievements: () => void;
 }
 
-// High quality photography sample images for mock practice mode (if camera isn't attached or user prefers sample practice)
 const SAMPLE_PRACTICE_SCENES: Record<PhotographyMode, string> = {
   portrait: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=80',
   landscape: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80',
@@ -48,16 +44,25 @@ export const CameraView: React.FC<CameraViewProps> = ({
   setMode,
   onPhotoCaptured,
   onOpenAcademy,
+  onOpenAchievements,
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [useLiveWebcam, setUseLiveWebcam] = useState<boolean>(true);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
-  const [tiltAngle, setTiltAngle] = useState<number>(0.8); // degrees
+  const [tiltAngle, setTiltAngle] = useState<number>(0.8);
   const [showHistogram, setShowHistogram] = useState<boolean>(true);
-  const [mockBrightness, setMockBrightness] = useState<number>(100); // 50-150% filter for exposure test
-  
+  const [showManualTuning, setShowManualTuning] = useState<boolean>(false);
+
+  // Manual Controls State
+  const [manualSettings, setManualSettings] = useState<CameraManualSettings>({
+    aperture: 2.8,
+    whiteBalance: 5500,
+    exposureEv: 0,
+    iso: 200,
+  });
+
   const [lumData, setLumData] = useState<ImageLuminanceData>({
     histogram: new Array(256).fill(0),
     avgBrightness: 120,
@@ -68,7 +73,21 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
 
-  // Initialize Web Camera Stream
+  // Helper filter generator for Canvas / Video styles
+  const getFilterCSS = useCallback(() => {
+    // EV brightness factor: -2 EV (50%) to +2 EV (150%)
+    const brightnessPct = Math.max(30, Math.min(180, 100 + manualSettings.exposureEv * 25));
+    // WB temperature warmth tint: 2700K (warm sepia/hue) to 8000K (cool hue)
+    const wbWarmth = manualSettings.whiteBalance < 5500
+      ? `sepia(${(5500 - manualSettings.whiteBalance) / 40}%)`
+      : `hue-rotate(${(manualSettings.whiteBalance - 5500) / 80}deg)`;
+    // Aperture blur effect: low f-number (f/1.4 = 1.5px blur simulation)
+    const blurPx = manualSettings.aperture < 2.8 ? (2.8 - manualSettings.aperture) * 1.2 : 0;
+
+    return `brightness(${brightnessPct}%) ${wbWarmth} blur(${blurPx}px)`;
+  }, [manualSettings]);
+
+  // Web camera initialization
   useEffect(() => {
     let stream: MediaStream | null = null;
 
@@ -86,67 +105,59 @@ export const CameraView: React.FC<CameraViewProps> = ({
           }
         })
         .catch((err) => {
-          console.warn('Camera access error or denied:', err);
+          console.warn('Camera access error:', err);
           setUseLiveWebcam(false);
           showError('Webcam unavailable. Switch to Practice Scene mode!');
         });
     }
 
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
+      if (stream) stream.getTracks().forEach((track) => track.stop());
     };
   }, [useLiveWebcam, facingMode]);
 
-  // Device orientation tilt sensor listener (for devices supporting accelerometer)
+  // Device orientation tilt sensor
   useEffect(() => {
     const handleOrientation = (e: DeviceOrientationEvent) => {
       if (e.gamma !== null) {
-        // gamma is roll angle [-90, 90]
         setTiltAngle(e.gamma / 3);
       }
     };
-
     window.addEventListener('deviceorientation', handleOrientation);
     return () => window.removeEventListener('deviceorientation', handleOrientation);
   }, []);
 
-  // Periodic image sampling for live histogram & exposure metrics
+  // Periodic sampling for histogram
   useEffect(() => {
     const interval = setInterval(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
-
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
+      canvas.width = 640;
+      canvas.height = 480;
+
+      ctx.filter = getFilterCSS();
+
       if (useLiveWebcam && videoRef.current && videoRef.current.readyState === 4) {
-        canvas.width = videoRef.current.videoWidth || 640;
-        canvas.height = videoRef.current.videoHeight || 480;
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(videoRef.current, 0, 0, 640, 480);
       } else {
-        // Render sample practice image onto hidden analysis canvas
         const img = new Image();
         img.crossOrigin = 'anonymous';
         img.src = SAMPLE_PRACTICE_SCENES[mode];
         img.onload = () => {
-          canvas.width = 640;
-          canvas.height = 480;
-          ctx.filter = `brightness(${mockBrightness}%)`;
           ctx.drawImage(img, 0, 0, 640, 480);
-          const data = analyzeCanvasLuminance(canvas);
-          setLumData(data);
+          setLumData(analyzeCanvasLuminance(canvas));
         };
         return;
       }
 
-      const data = analyzeCanvasLuminance(canvas);
-      setLumData(data);
+      setLumData(analyzeCanvasLuminance(canvas));
     }, 300);
 
     return () => clearInterval(interval);
-  }, [useLiveWebcam, mode, mockBrightness]);
+  }, [useLiveWebcam, mode, getFilterCSS]);
 
   // Handle Shutter Capture
   const handleShutter = useCallback(() => {
@@ -157,6 +168,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
     canvas.width = 1280;
     canvas.height = 960;
+    ctx.filter = getFilterCSS();
 
     const finalizeCapture = () => {
       const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
@@ -168,6 +180,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
         dataUrl,
         timestamp: new Date(),
         analysis: scoreAnalysis,
+        manualSettings,
       };
 
       setTimeout(() => {
@@ -187,38 +200,35 @@ export const CameraView: React.FC<CameraViewProps> = ({
       img.crossOrigin = 'anonymous';
       img.src = SAMPLE_PRACTICE_SCENES[mode];
       img.onload = () => {
-        ctx.filter = `brightness(${mockBrightness}%)`;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         finalizeCapture();
       };
     }
-  }, [useLiveWebcam, guide, mode, tiltAngle, mockBrightness, onPhotoCaptured]);
+  }, [useLiveWebcam, guide, mode, tiltAngle, manualSettings, getFilterCSS, onPhotoCaptured]);
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl flex flex-col items-center">
-      {/* Hidden processing canvas */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Main Viewport */}
       <div className="relative w-full aspect-[4/3] max-h-[70vh] bg-black flex items-center justify-center overflow-hidden">
-        {/* Flash Animation on Capture */}
         {isCapturing && <div className="absolute inset-0 bg-white z-50 animate-out fade-out duration-300" />}
 
-        {/* Real Live Camera Stream or Mock Interactive Practice Scene */}
         {useLiveWebcam ? (
           <video
             ref={videoRef}
             playsInline
             muted
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-all duration-150"
+            style={{ filter: getFilterCSS() }}
           />
         ) : (
           <div className="relative w-full h-full overflow-hidden">
             <img
               src={SAMPLE_PRACTICE_SCENES[mode]}
               alt="Practice scene"
-              className="w-full h-full object-cover transition-all duration-200"
-              style={{ filter: `brightness(${mockBrightness}%)` }}
+              className="w-full h-full object-cover transition-all duration-150"
+              style={{ filter: getFilterCSS() }}
             />
             <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-amber-300 font-medium border border-amber-500/30">
               Practice Scene Mode
@@ -229,7 +239,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
         {/* Composition HUD Overlays */}
         <CompositionGuides guide={guide} tiltAngle={tiltAngle} />
 
-        {/* Real-time Photog Coaching Headers */}
+        {/* Photog Coaching Headers */}
         <CoachOverlay
           mode={mode}
           guide={guide}
@@ -238,7 +248,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
           overexposedPercent={lumData.overexposedPercent}
         />
 
-        {/* Floating Histogram Overlay (Top-Right) */}
+        {/* Histogram Overlay */}
         {showHistogram && (
           <div className="absolute bottom-4 right-4 z-20 hidden sm:block">
             <LightingHistogram data={lumData} />
@@ -246,11 +256,18 @@ export const CameraView: React.FC<CameraViewProps> = ({
         )}
       </div>
 
-      {/* Camera Control Panel / Toolbar */}
+      {/* Manual Controls Sliding Drawer */}
+      {showManualTuning && (
+        <div className="w-full p-3 bg-slate-950 border-t border-slate-800">
+          <ManualControls settings={manualSettings} onChangeSettings={setManualSettings} />
+        </div>
+      )}
+
+      {/* Camera Control Panel */}
       <div className="w-full bg-slate-900 border-t border-slate-800 p-3 md:p-4 space-y-3">
         {/* Row 1: Mode Selectors & Overlays */}
         <div className="flex flex-wrap items-center justify-between gap-2">
-          {/* Photography Category Mode */}
+          {/* Mode Selector */}
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-slate-400 font-medium">Mode:</span>
             <Select value={mode} onValueChange={(val) => setMode(val as PhotographyMode)}>
@@ -267,55 +284,57 @@ export const CameraView: React.FC<CameraViewProps> = ({
             </Select>
           </div>
 
-          {/* Composition Guide Selection */}
+          {/* Composition Guide Toggle Buttons */}
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-400 font-medium">Grid Guide:</span>
+            <span className="text-xs text-slate-400 font-medium">Grid:</span>
             <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
               <button
                 onClick={() => setGuide('thirds')}
-                className={`px-2 py-1 rounded-md font-medium transition-colors ${
-                  guide === 'thirds' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'
-                }`}
+                className={`px-2 py-1 rounded-md transition-colors ${guide === 'thirds' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
               >
                 Thirds
               </button>
               <button
                 onClick={() => setGuide('golden_spiral')}
-                className={`px-2 py-1 rounded-md font-medium transition-colors ${
-                  guide === 'golden_spiral' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'
-                }`}
+                className={`px-2 py-1 rounded-md transition-colors ${guide === 'golden_spiral' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
               >
                 Spiral
               </button>
               <button
                 onClick={() => setGuide('leading_lines')}
-                className={`px-2 py-1 rounded-md font-medium transition-colors ${
-                  guide === 'leading_lines' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'
-                }`}
+                className={`px-2 py-1 rounded-md transition-colors ${guide === 'leading_lines' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
               >
                 Lines
               </button>
               <button
                 onClick={() => setGuide('center')}
-                className={`px-2 py-1 rounded-md font-medium transition-colors ${
-                  guide === 'center' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'
-                }`}
+                className={`px-2 py-1 rounded-md transition-colors ${guide === 'center' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
               >
-                Symmetry
+                Center
               </button>
               <button
                 onClick={() => setGuide('framing')}
-                className={`px-2 py-1 rounded-md font-medium transition-colors ${
-                  guide === 'framing' ? 'bg-emerald-600 text-white' : 'text-slate-300 hover:text-white'
-                }`}
+                className={`px-2 py-1 rounded-md transition-colors ${guide === 'framing' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
               >
-                Framing
+                Frame
               </button>
             </div>
           </div>
 
-          {/* Auxiliary Toggles */}
+          {/* Quick Tools */}
           <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowManualTuning(!showManualTuning)}
+              className={`h-8 text-xs border-slate-700 ${
+                showManualTuning ? 'bg-emerald-950 border-emerald-500/50 text-emerald-300' : 'bg-slate-800 text-slate-300'
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5 mr-1" />
+              Pro Tuning
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -327,32 +346,21 @@ export const CameraView: React.FC<CameraViewProps> = ({
               <Sun className="w-3.5 h-3.5 mr-1 text-amber-400" />
               Histogram
             </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenAcademy}
-              className="h-8 text-xs bg-slate-800 hover:bg-slate-700 border-slate-700 text-emerald-300"
-            >
-              <BookOpen className="w-3.5 h-3.5 mr-1" />
-              Masterclass
-            </Button>
           </div>
         </div>
 
-        {/* Row 2: Shutter Button & Exposure Slider */}
+        {/* Row 2: Shutter Button & Toggles */}
         <div className="flex items-center justify-between pt-1">
-          {/* Camera / Practice toggle */}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setUseLiveWebcam(!useLiveWebcam)}
-              className="h-9 text-xs bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200"
+              className="h-9 text-xs bg-slate-800 border-slate-700 text-slate-200"
             >
               {useLiveWebcam ? (
                 <>
-                  <Camera className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Live Webcam
+                  <Camera className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Live WebCam
                 </>
               ) : (
                 <>
@@ -371,21 +379,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
                 <SwitchCamera className="w-4 h-4" />
               </Button>
             )}
-
-            {!useLiveWebcam && (
-              <div className="hidden sm:flex items-center gap-2 text-xs text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700/60">
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
-                <span>Simulate Lighting Exposure:</span>
-                <input
-                  type="range"
-                  min="50"
-                  max="150"
-                  value={mockBrightness}
-                  onChange={(e) => setMockBrightness(Number(e.target.value))}
-                  className="w-20 accent-amber-400"
-                />
-              </div>
-            )}
           </div>
 
           {/* MAIN SHUTTER BUTTON */}
@@ -399,8 +392,17 @@ export const CameraView: React.FC<CameraViewProps> = ({
             </div>
           </button>
 
-          {/* Simulated Gyro / Horizon straightener tool button */}
           <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenAchievements}
+              className="h-9 text-xs bg-slate-800 border-slate-700 text-amber-300 hover:bg-slate-700"
+            >
+              <Award className="w-3.5 h-3.5 mr-1 text-amber-400" />
+              Badges
+            </Button>
+
             <Button
               variant="outline"
               size="sm"
@@ -408,7 +410,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
               className="h-9 text-xs bg-slate-800 border-slate-700 text-slate-300 hover:text-emerald-300"
             >
               <RotateCcw className="w-3.5 h-3.5 mr-1" />
-              Level Horizon
+              Straighten
             </Button>
           </div>
         </div>

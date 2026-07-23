@@ -17,13 +17,22 @@ export interface PhotoAnalysis {
   modeUsed: PhotographyMode;
 }
 
+export interface CameraManualSettings {
+  aperture: number; // f/1.4 to f/16 (affects bokeh blur)
+  whiteBalance: number; // Kelvin 2700K (warm) to 8000K (cool)
+  exposureEv: number; // -2.0 to +2.0
+  iso: number; // 100 to 3200 (affects grain)
+}
+
 export interface CapturedPhoto {
   id: string;
   dataUrl: string;
   timestamp: Date;
   analysis: PhotoAnalysis;
+  manualSettings?: CameraManualSettings;
   title?: string;
   notes?: string;
+  tags?: string[];
 }
 
 export interface PhotoLesson {
@@ -35,4 +44,13 @@ export interface PhotoLesson {
   targetMode: PhotographyMode;
   tips: string[];
   exampleImage: string;
+}
+
+export interface AchievementBadge {
+  id: string;
+  title: string;
+  description: string;
+  iconName: string;
+  unlocked: boolean;
+  progress: number; // 0 - 100
 }
