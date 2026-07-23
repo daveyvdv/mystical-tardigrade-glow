@@ -3,7 +3,7 @@ import { CapturedPhoto } from '../types/camera';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Award, CheckCircle, AlertTriangle, Download, Trash2, Camera, Sparkles, FileText } from 'lucide-react';
+import { Award, CheckCircle, AlertTriangle, Download, Trash2, Camera, Sparkles, FileText, Info } from 'lucide-react';
 import { showSuccess } from '../utils/toast';
 
 interface PhotoReviewModalProps {
@@ -16,7 +16,7 @@ interface PhotoReviewModalProps {
 export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({ photo, onClose, onDelete, onUpdateNotes }) => {
   if (!photo) return null;
 
-  const { analysis, dataUrl, timestamp, notes: initialNotes } = photo;
+  const { analysis, dataUrl, timestamp, manualSettings, notes: initialNotes } = photo;
   const { overallScore, compositionScore, lightingScore, levelScore, feedback, strengths, brightness, contrast } = analysis;
 
   const [notesText, setNotesText] = useState<string>(initialNotes || '');
@@ -66,6 +66,40 @@ export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({ photo, onClo
                 <div className="text-right">
                   <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Quality Rating</div>
                   <div className="text-lg font-bold font-mono text-emerald-400">{overallScore}/100</div>
+                </div>
+              </div>
+            </div>
+
+            {/* EXIF Metadata Card */}
+            <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs space-y-1.5">
+              <div className="flex items-center gap-1.5 text-slate-300 font-semibold border-b border-slate-800 pb-1">
+                <Info className="w-3.5 h-3.5 text-cyan-400" />
+                <span>EXIF Shooting Data</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 text-[11px] font-mono text-slate-300 pt-1">
+                <div>
+                  <span className="text-slate-500 block text-[9px]">Aperture</span>
+                  <span>f/{manualSettings?.aperture.toFixed(1) || '2.8'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[9px]">ISO Speed</span>
+                  <span>ISO {manualSettings?.iso || 200}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[9px]">White Balance</span>
+                  <span>{manualSettings?.whiteBalance || 5500}K</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[9px]">Shutter Speed</span>
+                  <span>1/250s</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[9px]">Aspect Ratio</span>
+                  <span>{manualSettings?.aspectRatio || '3:2'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[9px]">Film Style</span>
+                  <span className="capitalize">{manualSettings?.filmPreset || 'Natural'}</span>
                 </div>
               </div>
             </div>
