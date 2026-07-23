@@ -6,6 +6,7 @@ import { CoachOverlay } from './CoachOverlay';
 import { ManualControls } from './ManualControls';
 import { AspectRatioMask } from './AspectRatioMask';
 import { analyzeCanvasLuminance, generatePhotoScore, ImageLuminanceData } from '../utils/imageAnalysis';
+import { playShutterSound, playTimerBeep } from '../utils/audio';
 import {
   Camera,
   Sun,
@@ -15,7 +16,9 @@ import {
   Sliders,
   SwitchCamera,
   Award,
-  Focus
+  Focus,
+  Timer,
+  Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -50,12 +53,18 @@ export const CameraView: React.FC<CameraViewProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [useLiveWebcam, setUseLiveWebcam] = useState<boolean>(true);
+  const [customImage, setCustomImage] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const [tiltAngle, setTiltAngle] = useState<number>(0.8);
   const [showHistogram, setShowHistogram] = useState<boolean>(true);
   const [showManualTuning, setShowManualTuning] = useState<boolean>(false);
+
+  // Self Timer State: 0 = Off, 3 = 3s, 5 = 5s, 10 = 10s
+  const [timerDuration, setTimerDuration] = useState<number>(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   // Focus point click reticle state
   const [focusTarget, setFocusTarget] = useState<{ x: number; y: number } | null>(null);
@@ -83,18 +92,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
   // Helper filter generator for Canvas / Video styles
   const getFilterCSS = useCallback(() => {
-    // 1. Exposure EV
     let brightnessPct = Math.max(30, Math.min(180, 100 + manualSettings.exposureEv * 25));
     
-    // 2. White Balance warmth
     let wbWarmth = manualSettings.whiteBalance < 5500
       ? `sepia(${(5500 - manualSettings.whiteBalance) / 40}%)`
       : `hue-rotate(${(manualSettings.whiteBalance - 5500) / 80}deg)`;
 
-    // 3. Aperture blur (Bokeh)
     const blurPx = manualSettings.aperture < 2.8 ? (2.8 - manualSettings.aperture) * 1.2 : 0;
 
-    // 4. Light Direction Simulation modifier
     if (manualSettings.lightDirection === 'golden_hour') {
       wbWarmth += ' sepia(25%) saturate(120%)';
     } else if (manualSettings.lightDirection === 'midday_harsh') {
@@ -103,7 +108,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
       brightnessPct -= 10;
     }
 
-    // 5. Film Presets
     let filmFilter = '';
     switch (manualSettings.filmPreset) {
       case 'monochrome':
@@ -187,7 +191,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
       } else {
         const img = new Image();
         img.crossOrigin = 'anonymous';
-        img.src = SAMPLE_PRACTICE_SCENES[mode];
+        img.src = customImage || SAMPLE_PRACTICE_SCENES[mode];
         img.onload = () => {
           ctx.drawImage(img, 0, 0, 640, 480);
           setLumData(analyzeCanvasLuminance(canvas));
@@ -199,7 +203,23 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }, 300);
 
     return () => clearInterval(interval);
-  }, [useLiveWebcam, mode, getFilterCSS]);
+  }, [useLiveWebcam, mode, customImage, getFilterCSS]);
+
+  // Handle custom image file upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setCustomImage(event.target.result as string);
+          setUseLiveWebcam(false);
+          showSuccess("Custom image loaded into Practice Mode!");
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Tap Viewfinder to focus
   const handleViewfinderClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -213,9 +233,11 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }, 2000);
   };
 
-  // Handle Shutter Capture
-  const handleShutter = useCallback(() => {
+  // Core capture execution
+  const executeCapture = useCallback(() => {
     setIsCapturing(true);
+    playShutterSound();
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -252,17 +274,50 @@ export const CameraView: React.FC<CameraViewProps> = ({
     } else {
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.src = SAMPLE_PRACTICE_SCENES[mode];
+      img.src = customImage || SAMPLE_PRACTICE_SCENES[mode];
       img.onload = () => {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         finalizeCapture();
       };
     }
-  }, [useLiveWebcam, guide, mode, tiltAngle, manualSettings, getFilterCSS, onPhotoCaptured]);
+  }, [useLiveWebcam, customImage, guide, mode, tiltAngle, manualSettings, getFilterCSS, onPhotoCaptured]);
+
+  // Trigger Shutter (with optional timer countdown)
+  const handleShutter = useCallback(() => {
+    if (isCapturing || countdown !== null) return;
+
+    if (timerDuration > 0) {
+      let current = timerDuration;
+      setCountdown(current);
+      playTimerBeep(false);
+
+      const interval = setInterval(() => {
+        current -= 1;
+        if (current > 0) {
+          setCountdown(current);
+          playTimerBeep(false);
+        } else {
+          clearInterval(interval);
+          setCountdown(null);
+          playTimerBeep(true);
+          executeCapture();
+        }
+      }, 1000);
+    } else {
+      executeCapture();
+    }
+  }, [isCapturing, countdown, timerDuration, executeCapture]);
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl flex flex-col items-center">
       <canvas ref={canvasRef} className="hidden" />
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept="image/*"
+        className="hidden"
+      />
 
       {/* Main Viewport */}
       <div
@@ -270,6 +325,15 @@ export const CameraView: React.FC<CameraViewProps> = ({
         className="relative w-full aspect-[4/3] max-h-[70vh] bg-black flex items-center justify-center overflow-hidden cursor-crosshair select-none"
       >
         {isCapturing && <div className="absolute inset-0 bg-white z-50 animate-out fade-out duration-300" />}
+
+        {/* Self-Timer Countdown Overlay */}
+        {countdown !== null && (
+          <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+            <div className="text-7xl md:text-9xl font-black text-amber-400 font-mono animate-bounce drop-shadow-[0_0_25px_rgba(251,191,36,0.8)]">
+              {countdown}
+            </div>
+          </div>
+        )}
 
         {useLiveWebcam ? (
           <video
@@ -282,13 +346,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
         ) : (
           <div className="relative w-full h-full overflow-hidden">
             <img
-              src={SAMPLE_PRACTICE_SCENES[mode]}
+              src={customImage || SAMPLE_PRACTICE_SCENES[mode]}
               alt="Practice scene"
               className="w-full h-full object-cover transition-all duration-150"
               style={{ filter: getFilterCSS() }}
             />
             <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-amber-300 font-medium border border-amber-500/30">
-              Practice Scene Mode
+              {customImage ? 'Custom Practice Image' : 'Practice Scene Mode'}
             </div>
           </div>
         )}
@@ -391,8 +455,36 @@ export const CameraView: React.FC<CameraViewProps> = ({
             </div>
           </div>
 
-          {/* Quick Tools */}
+          {/* Self-Timer & Quick Tools */}
           <div className="flex items-center gap-1">
+            {/* Self Timer Button */}
+            <div className="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
+              <button
+                onClick={() => setTimerDuration(0)}
+                className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 0 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
+              >
+                Timer Off
+              </button>
+              <button
+                onClick={() => setTimerDuration(3)}
+                className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 3 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
+              >
+                3s
+              </button>
+              <button
+                onClick={() => setTimerDuration(5)}
+                className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 5 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
+              >
+                5s
+              </button>
+              <button
+                onClick={() => setTimerDuration(10)}
+                className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 10 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
+              >
+                10s
+              </button>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
@@ -439,6 +531,17 @@ export const CameraView: React.FC<CameraViewProps> = ({
               )}
             </Button>
 
+            {!useLiveWebcam && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                className="h-9 text-xs bg-slate-800 border-slate-700 text-purple-300 hover:text-purple-200"
+              >
+                <Upload className="w-3.5 h-3.5 mr-1 text-purple-400" /> Upload Image
+              </Button>
+            )}
+
             {useLiveWebcam && (
               <Button
                 variant="outline"
@@ -454,7 +557,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
           {/* MAIN SHUTTER BUTTON */}
           <button
             onClick={handleShutter}
-            disabled={isCapturing}
+            disabled={isCapturing || countdown !== null}
             className="group relative w-14 h-14 rounded-full bg-slate-900 border-4 border-emerald-400 p-1 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all duration-150"
           >
             <div className="w-full h-full rounded-full bg-emerald-500 group-hover:bg-emerald-400 transition-colors flex items-center justify-center">
