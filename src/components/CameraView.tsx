@@ -4,6 +4,7 @@ import { CompositionGuides } from './CompositionGuides';
 import { LightingHistogram } from './LightingHistogram';
 import { CoachOverlay } from './CoachOverlay';
 import { ManualControls } from './ManualControls';
+import { AspectRatioMask } from './AspectRatioMask';
 import { analyzeCanvasLuminance, generatePhotoScore, ImageLuminanceData } from '../utils/imageAnalysis';
 import {
   Camera,
@@ -13,7 +14,8 @@ import {
   Image as ImageIcon,
   Sliders,
   SwitchCamera,
-  Award
+  Award,
+  Focus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -55,12 +57,18 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const [showHistogram, setShowHistogram] = useState<boolean>(true);
   const [showManualTuning, setShowManualTuning] = useState<boolean>(false);
 
-  // Manual Controls State
+  // Focus point click reticle state
+  const [focusTarget, setFocusTarget] = useState<{ x: number; y: number } | null>(null);
+
+  // Manual Controls & Film Presets State
   const [manualSettings, setManualSettings] = useState<CameraManualSettings>({
     aperture: 2.8,
     whiteBalance: 5500,
     exposureEv: 0,
     iso: 200,
+    filmPreset: 'standard',
+    aspectRatio: '3:2',
+    lightDirection: 'golden_hour'
   });
 
   const [lumData, setLumData] = useState<ImageLuminanceData>({
@@ -75,16 +83,50 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
   // Helper filter generator for Canvas / Video styles
   const getFilterCSS = useCallback(() => {
-    // EV brightness factor: -2 EV (50%) to +2 EV (150%)
-    const brightnessPct = Math.max(30, Math.min(180, 100 + manualSettings.exposureEv * 25));
-    // WB temperature warmth tint: 2700K (warm sepia/hue) to 8000K (cool hue)
-    const wbWarmth = manualSettings.whiteBalance < 5500
+    // 1. Exposure EV
+    let brightnessPct = Math.max(30, Math.min(180, 100 + manualSettings.exposureEv * 25));
+    
+    // 2. White Balance warmth
+    let wbWarmth = manualSettings.whiteBalance < 5500
       ? `sepia(${(5500 - manualSettings.whiteBalance) / 40}%)`
       : `hue-rotate(${(manualSettings.whiteBalance - 5500) / 80}deg)`;
-    // Aperture blur effect: low f-number (f/1.4 = 1.5px blur simulation)
+
+    // 3. Aperture blur (Bokeh)
     const blurPx = manualSettings.aperture < 2.8 ? (2.8 - manualSettings.aperture) * 1.2 : 0;
 
-    return `brightness(${brightnessPct}%) ${wbWarmth} blur(${blurPx}px)`;
+    // 4. Light Direction Simulation modifier
+    if (manualSettings.lightDirection === 'golden_hour') {
+      wbWarmth += ' sepia(25%) saturate(120%)';
+    } else if (manualSettings.lightDirection === 'midday_harsh') {
+      brightnessPct += 15;
+    } else if (manualSettings.lightDirection === 'backlit') {
+      brightnessPct -= 10;
+    }
+
+    // 5. Film Presets
+    let filmFilter = '';
+    switch (manualSettings.filmPreset) {
+      case 'monochrome':
+        filmFilter = 'grayscale(100%) contrast(140%)';
+        break;
+      case 'kodachrome':
+        filmFilter = 'saturate(130%) sepia(20%) contrast(115%)';
+        break;
+      case 'teal_orange':
+        filmFilter = 'hue-rotate(-15deg) saturate(125%) contrast(110%)';
+        break;
+      case 'pastel_portrait':
+        filmFilter = 'brightness(110%) contrast(90%) saturate(110%)';
+        break;
+      case 'fuji_vivid':
+        filmFilter = 'saturate(160%) contrast(120%)';
+        break;
+      default:
+        filmFilter = '';
+        break;
+    }
+
+    return `brightness(${brightnessPct}%) ${wbWarmth} blur(${blurPx}px) ${filmFilter}`;
   }, [manualSettings]);
 
   // Web camera initialization
@@ -159,6 +201,18 @@ export const CameraView: React.FC<CameraViewProps> = ({
     return () => clearInterval(interval);
   }, [useLiveWebcam, mode, getFilterCSS]);
 
+  // Tap Viewfinder to focus
+  const handleViewfinderClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setFocusTarget({ x, y });
+
+    setTimeout(() => {
+      setFocusTarget(null);
+    }, 2000);
+  };
+
   // Handle Shutter Capture
   const handleShutter = useCallback(() => {
     setIsCapturing(true);
@@ -211,7 +265,10 @@ export const CameraView: React.FC<CameraViewProps> = ({
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Main Viewport */}
-      <div className="relative w-full aspect-[4/3] max-h-[70vh] bg-black flex items-center justify-center overflow-hidden">
+      <div
+        onClick={handleViewfinderClick}
+        className="relative w-full aspect-[4/3] max-h-[70vh] bg-black flex items-center justify-center overflow-hidden cursor-crosshair select-none"
+      >
         {isCapturing && <div className="absolute inset-0 bg-white z-50 animate-out fade-out duration-300" />}
 
         {useLiveWebcam ? (
@@ -236,6 +293,19 @@ export const CameraView: React.FC<CameraViewProps> = ({
           </div>
         )}
 
+        {/* Tap To Focus Target Reticle Overlay */}
+        {focusTarget && (
+          <div
+            className="absolute z-30 pointer-events-none -translate-x-1/2 -translate-y-1/2 w-12 h-12 border-2 border-amber-400 rounded-full flex items-center justify-center animate-ping"
+            style={{ left: `${focusTarget.x}%`, top: `${focusTarget.y}%` }}
+          >
+            <Focus className="w-6 h-6 text-amber-400" />
+          </div>
+        )}
+
+        {/* Aspect Ratio Letterbox Overlay */}
+        <AspectRatioMask aspectRatio={manualSettings.aspectRatio} />
+
         {/* Composition HUD Overlays */}
         <CompositionGuides guide={guide} tiltAngle={tiltAngle} />
 
@@ -256,7 +326,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
         )}
       </div>
 
-      {/* Manual Controls Sliding Drawer */}
+      {/* Manual Controls & Film Profiles Drawer */}
       {showManualTuning && (
         <div className="w-full p-3 bg-slate-950 border-t border-slate-800">
           <ManualControls settings={manualSettings} onChangeSettings={setManualSettings} />

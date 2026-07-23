@@ -1,5 +1,6 @@
 import React from 'react';
-import { CameraManualSettings } from '../types/camera';
+import { CameraManualSettings, FilmPresetType, AspectRatioType, LightDirectionType } from '../types/camera';
+import { FilmPresetSelector } from './FilmPresetSelector';
 import { Sliders, Sun, Eye, Gauge, Flame } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
@@ -10,11 +11,11 @@ interface ManualControlsProps {
 
 export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChangeSettings }) => {
   return (
-    <div className="bg-slate-900/95 border border-slate-700/80 rounded-xl p-3 sm:p-4 text-xs text-slate-200 space-y-3.5 shadow-xl">
+    <div className="bg-slate-900/95 border border-slate-700/80 rounded-xl p-3 sm:p-4 text-xs text-slate-200 space-y-4 shadow-xl">
       <div className="flex items-center justify-between border-b border-slate-800 pb-2">
         <div className="flex items-center gap-2 font-bold text-slate-100">
           <Sliders className="w-4 h-4 text-emerald-400" />
-          <span>Pro Manual Camera Tuning</span>
+          <span>Pro Manual Tuning & Film Styles</span>
         </div>
         <button
           onClick={() =>
@@ -23,6 +24,9 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
               whiteBalance: 5500,
               exposureEv: 0,
               iso: 200,
+              filmPreset: 'standard',
+              aspectRatio: '3:2',
+              lightDirection: 'golden_hour'
             })
           }
           className="text-[11px] text-amber-400 hover:underline"
@@ -31,7 +35,17 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Film Profile & Aspect Ratio Controls */}
+      <FilmPresetSelector
+        filmPreset={settings.filmPreset}
+        onSelectPreset={(filmPreset) => onChangeSettings({ ...settings, filmPreset })}
+        aspectRatio={settings.aspectRatio}
+        onSelectAspectRatio={(aspectRatio) => onChangeSettings({ ...settings, aspectRatio })}
+        lightDirection={settings.lightDirection}
+        onSelectLightDirection={(lightDirection) => onChangeSettings({ ...settings, lightDirection })}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
         {/* 1. Depth of Field / Aperture */}
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-[11px]">
@@ -69,9 +83,6 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
             onValueChange={([val]) => onChangeSettings({ ...settings, whiteBalance: val })}
             className="cursor-pointer"
           />
-          <p className="text-[10px] text-slate-400">
-            {settings.whiteBalance < 4500 ? 'Cool tungsten/blue hour tint' : settings.whiteBalance > 6000 ? 'Warm Golden Hour sunset glow' : 'Neutral daylight balance'}
-          </p>
         </div>
 
         {/* 3. Exposure Compensation EV */}

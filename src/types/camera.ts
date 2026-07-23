@@ -2,6 +2,12 @@ export type CompositionGuideType = 'thirds' | 'golden_spiral' | 'leading_lines' 
 
 export type PhotographyMode = 'portrait' | 'landscape' | 'architecture' | 'macro' | 'street';
 
+export type AspectRatioType = '3:2' | '4:5' | '1:1' | '16:9' | '2.39:1';
+
+export type FilmPresetType = 'standard' | 'monochrome' | 'kodachrome' | 'teal_orange' | 'pastel_portrait' | 'fuji_vivid';
+
+export type LightDirectionType = 'golden_hour' | 'soft_side' | 'midday_harsh' | 'backlit';
+
 export interface PhotoAnalysis {
   overallScore: number;
   compositionScore: number;
@@ -22,6 +28,9 @@ export interface CameraManualSettings {
   whiteBalance: number; // Kelvin 2700K (warm) to 8000K (cool)
   exposureEv: number; // -2.0 to +2.0
   iso: number; // 100 to 3200 (affects grain)
+  filmPreset: FilmPresetType;
+  aspectRatio: AspectRatioType;
+  lightDirection: LightDirectionType;
 }
 
 export interface CapturedPhoto {
