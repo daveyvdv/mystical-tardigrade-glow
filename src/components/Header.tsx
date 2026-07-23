@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, BookOpen, Award } from 'lucide-react';
+import { Camera, BookOpen, Award, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
@@ -8,6 +8,7 @@ interface HeaderProps {
   unlockedBadgeCount: number;
   onOpenAcademy: () => void;
   onOpenAchievements: () => void;
+  onOpenQuiz: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   unlockedBadgeCount,
   onOpenAcademy,
   onOpenAchievements,
+  onOpenQuiz,
 }) => {
   return (
     <header className="w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-4 py-3">
@@ -36,23 +38,15 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Stats & Actions */}
-        <div className="flex items-center gap-2.5">
-          {photoCount > 0 && (
-            <div className="hidden sm:flex items-center gap-3 bg-slate-800/80 px-3 py-1 rounded-xl border border-slate-700/80 text-xs">
-              <div>
-                <span className="text-slate-400 block text-[10px]">Shots</span>
-                <span className="font-mono font-bold text-slate-200">{photoCount}</span>
-              </div>
-              <div className="h-6 w-[1px] bg-slate-700" />
-              <div className="flex items-center gap-1">
-                <Award className="w-4 h-4 text-amber-400" />
-                <div>
-                  <span className="text-slate-400 block text-[10px]">Avg Score</span>
-                  <span className="font-mono font-bold text-emerald-400">{averageScore}</span>
-                </div>
-              </div>
-            </div>
-          )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={onOpenQuiz}
+            className="bg-slate-800 hover:bg-slate-700 border-slate-700 text-emerald-300 font-semibold text-xs h-9 px-3"
+          >
+            <Sparkles className="w-4 h-4 mr-1 text-amber-400" />
+            Skill Quiz
+          </Button>
 
           <Button
             variant="outline"

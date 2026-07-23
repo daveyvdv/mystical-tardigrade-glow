@@ -1,28 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CapturedPhoto } from '../types/camera';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Award, CheckCircle, AlertTriangle, Download, Trash2, Camera, Sparkles, RefreshCw } from 'lucide-react';
+import { Award, CheckCircle, AlertTriangle, Download, Trash2, Camera, Sparkles, FileText } from 'lucide-react';
 import { showSuccess } from '../utils/toast';
 
 interface PhotoReviewModalProps {
   photo: CapturedPhoto | null;
   onClose: () => void;
   onDelete: (id: string) => void;
+  onUpdateNotes?: (id: string, notes: string) => void;
 }
 
-export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({ photo, onClose, onDelete }) => {
+export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({ photo, onClose, onDelete, onUpdateNotes }) => {
   if (!photo) return null;
 
-  const { analysis, dataUrl, timestamp } = photo;
+  const { analysis, dataUrl, timestamp, notes: initialNotes } = photo;
   const { overallScore, compositionScore, lightingScore, levelScore, feedback, strengths, brightness, contrast } = analysis;
 
-  const getScoreColor = (score: number) => {
-    if (score >= 85) return 'text-emerald-400 border-emerald-500/30 bg-emerald-950/30';
-    if (score >= 70) return 'text-amber-400 border-amber-500/30 bg-amber-950/30';
-    return 'text-rose-400 border-rose-500/30 bg-rose-950/30';
-  };
+  const [notesText, setNotesText] = useState<string>(initialNotes || '');
 
   const handleDownload = () => {
     const link = document.createElement('a');
@@ -30,6 +27,13 @@ export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({ photo, onClo
     link.download = `FrameCraft-${photo.id}.jpg`;
     link.click();
     showSuccess("Photo downloaded to your device!");
+  };
+
+  const handleSaveNotes = () => {
+    if (onUpdateNotes) {
+      onUpdateNotes(photo.id, notesText);
+      showSuccess("Notes saved to portfolio!");
+    }
   };
 
   return (
@@ -64,6 +68,23 @@ export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({ photo, onClo
                   <div className="text-lg font-bold font-mono text-emerald-400">{overallScore}/100</div>
                 </div>
               </div>
+            </div>
+
+            {/* Custom Notes Input */}
+            <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/60 space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-amber-400" /> Personal Shoot Notes:
+              </label>
+              <textarea
+                value={notesText}
+                onChange={(e) => setNotesText(e.target.value)}
+                placeholder="Add notes (e.g. Golden hour sunset at 5pm, 50mm lens...)"
+                rows={2}
+                className="w-full bg-slate-950 border border-slate-700 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-amber-400"
+              />
+              <Button onClick={handleSaveNotes} size="sm" variant="outline" className="text-[11px] h-7 bg-slate-900 border-slate-700 text-amber-300">
+                Save Notes
+              </Button>
             </div>
 
             <div className="flex items-center justify-between gap-2">

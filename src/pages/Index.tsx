@@ -6,6 +6,8 @@ import { PhotoReviewModal } from '../components/PhotoReviewModal';
 import { AcademyModal } from '../components/AcademyModal';
 import { AchievementsModal } from '../components/AchievementsModal';
 import { PhotoComparisonModal } from '../components/PhotoComparisonModal';
+import { SkillQuizModal } from '../components/SkillQuizModal';
+import { LightingDiagrams } from '../components/LightingDiagrams';
 import { Gallery } from '../components/Gallery';
 import { calculateAchievements } from '../utils/achievements';
 import { MadeWithDyad } from '../components/made-with-dyad';
@@ -22,6 +24,7 @@ const Index: React.FC = () => {
 
   const [isAcademyOpen, setIsAcademyOpen] = useState<boolean>(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState<boolean>(false);
+  const [isQuizOpen, setIsQuizOpen] = useState<boolean>(false);
 
   // Dynamic achievement calculations
   const achievements = useMemo(() => calculateAchievements(photos), [photos]);
@@ -35,6 +38,12 @@ const Index: React.FC = () => {
   const handleDeletePhoto = (id: string) => {
     setPhotos((prev) => prev.filter((p) => p.id !== id));
     showSuccess("Photo removed from gallery.");
+  };
+
+  const handleUpdateNotes = (id: string, notes: string) => {
+    setPhotos((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, notes } : p))
+    );
   };
 
   const handleClearAll = () => {
@@ -61,6 +70,7 @@ const Index: React.FC = () => {
         unlockedBadgeCount={unlockedBadgeCount}
         onOpenAcademy={() => setIsAcademyOpen(true)}
         onOpenAchievements={() => setIsAchievementsOpen(true)}
+        onOpenQuiz={() => setIsQuizOpen(true)}
       />
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-3 sm:p-6 space-y-6">
@@ -75,6 +85,11 @@ const Index: React.FC = () => {
             onOpenAcademy={() => setIsAcademyOpen(true)}
             onOpenAchievements={() => setIsAchievementsOpen(true)}
           />
+        </section>
+
+        {/* Studio & Natural Overhead Lighting Diagrams */}
+        <section>
+          <LightingDiagrams />
         </section>
 
         {/* Portfolio Gallery */}
@@ -93,6 +108,7 @@ const Index: React.FC = () => {
         photo={activePhoto}
         onClose={() => setActivePhoto(null)}
         onDelete={handleDeletePhoto}
+        onUpdateNotes={handleUpdateNotes}
       />
 
       {/* Side-by-side Photo Comparison Dialog */}
@@ -114,6 +130,12 @@ const Index: React.FC = () => {
         isOpen={isAchievementsOpen}
         onClose={() => setIsAchievementsOpen(false)}
         achievements={achievements}
+      />
+
+      {/* Photo Eye Skill Quiz Challenge Dialog */}
+      <SkillQuizModal
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
       />
 
       <footer className="border-t border-slate-800/80 py-4 mt-8">
