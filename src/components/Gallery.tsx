@@ -146,7 +146,7 @@ export const Gallery: React.FC<GalleryProps> = ({ photos, onSelectPhoto, onClear
             <option value="all">All Ratings</option>
             <option value="high">High (80+)</option>
             <option value="medium">Medium (60-79)</option>
-            <option value="needs_work">Needs Work (<60)</option>
+            <option value="needs_work">{"Needs Work (<60)"}</option>
           </select>
         </div>
       </div>
