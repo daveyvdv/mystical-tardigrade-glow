@@ -1,27 +1,11 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { CompositionGuideType, PhotographyMode, CapturedPhoto, CameraManualSettings } from '../types/camera';
-import { CompositionGuides } from './CompositionGuides';
-import { LightingHistogram } from './LightingHistogram';
-import { CoachOverlay } from './CoachOverlay';
+import { CameraViewport } from './camera/CameraViewport';
+import { CameraToolbar } from './camera/CameraToolbar';
+import { CameraShutterBar } from './camera/CameraShutterBar';
 import { ManualControls } from './ManualControls';
-import { AspectRatioMask } from './AspectRatioMask';
 import { analyzeCanvasLuminance, generatePhotoScore, ImageLuminanceData } from '../utils/imageAnalysis';
 import { playShutterSound, playTimerBeep } from '../utils/audio';
-import {
-  Camera,
-  Sun,
-  RotateCcw,
-  BookOpen,
-  Image as ImageIcon,
-  Sliders,
-  SwitchCamera,
-  Award,
-  Focus,
-  Timer,
-  Upload
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { showError, showSuccess } from '../utils/toast';
 
 interface CameraViewProps {
@@ -62,14 +46,14 @@ export const CameraView: React.FC<CameraViewProps> = ({
   const [showHistogram, setShowHistogram] = useState<boolean>(true);
   const [showManualTuning, setShowManualTuning] = useState<boolean>(false);
 
-  // Self Timer State: 0 = Off, 3 = 3s, 5 = 5s, 10 = 10s
+  // Self Timer State
   const [timerDuration, setTimerDuration] = useState<number>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
 
-  // Focus point click reticle state
+  // Focus reticle
   const [focusTarget, setFocusTarget] = useState<{ x: number; y: number } | null>(null);
 
-  // Manual Controls & Film Presets State
+  // Manual Settings
   const [manualSettings, setManualSettings] = useState<CameraManualSettings>({
     aperture: 2.8,
     whiteBalance: 5500,
@@ -90,7 +74,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
 
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
 
-  // Helper filter generator for Canvas / Video styles
   const getFilterCSS = useCallback(() => {
     let brightnessPct = Math.max(30, Math.min(180, 100 + manualSettings.exposureEv * 25));
     
@@ -133,7 +116,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
     return `brightness(${brightnessPct}%) ${wbWarmth} blur(${blurPx}px) ${filmFilter}`;
   }, [manualSettings]);
 
-  // Web camera initialization
+  // Webcam stream management
   useEffect(() => {
     let stream: MediaStream | null = null;
 
@@ -162,7 +145,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
     };
   }, [useLiveWebcam, facingMode]);
 
-  // Device orientation tilt sensor
+  // Orientation tilt
   useEffect(() => {
     const handleOrientation = (e: DeviceOrientationEvent) => {
       if (e.gamma !== null) {
@@ -173,7 +156,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
     return () => window.removeEventListener('deviceorientation', handleOrientation);
   }, []);
 
-  // Periodic sampling for histogram
+  // Periodic histogram analysis
   useEffect(() => {
     const interval = setInterval(() => {
       const canvas = canvasRef.current;
@@ -205,7 +188,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
     return () => clearInterval(interval);
   }, [useLiveWebcam, mode, customImage, getFilterCSS]);
 
-  // Handle custom image file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -214,14 +196,13 @@ export const CameraView: React.FC<CameraViewProps> = ({
         if (event.target?.result) {
           setCustomImage(event.target.result as string);
           setUseLiveWebcam(false);
-          showSuccess("Custom image loaded into Practice Mode!");
+          showSuccess('Custom image loaded into Practice Mode!');
         }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // Tap Viewfinder to focus
   const handleViewfinderClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
@@ -233,7 +214,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }, 2000);
   };
 
-  // Core capture execution
   const executeCapture = useCallback(() => {
     setIsCapturing(true);
     playShutterSound();
@@ -282,7 +262,6 @@ export const CameraView: React.FC<CameraViewProps> = ({
     }
   }, [useLiveWebcam, customImage, guide, mode, tiltAngle, manualSettings, getFilterCSS, onPhotoCaptured]);
 
-  // Trigger Shutter (with optional timer countdown)
   const handleShutter = useCallback(() => {
     if (isCapturing || countdown !== null) return;
 
@@ -319,274 +298,59 @@ export const CameraView: React.FC<CameraViewProps> = ({
         className="hidden"
       />
 
-      {/* Main Viewport */}
-      <div
-        onClick={handleViewfinderClick}
-        className="relative w-full aspect-[4/3] max-h-[70vh] bg-black flex items-center justify-center overflow-hidden cursor-crosshair select-none"
-      >
-        {isCapturing && <div className="absolute inset-0 bg-white z-50 animate-out fade-out duration-300" />}
+      {/* Modular Viewport */}
+      <CameraViewport
+        videoRef={videoRef}
+        useLiveWebcam={useLiveWebcam}
+        customImage={customImage}
+        sampleSceneUrl={SAMPLE_PRACTICE_SCENES[mode]}
+        isCapturing={isCapturing}
+        countdown={countdown}
+        focusTarget={focusTarget}
+        guide={guide}
+        mode={mode}
+        tiltAngle={tiltAngle}
+        manualSettings={manualSettings}
+        lumData={lumData}
+        showHistogram={showHistogram}
+        getFilterCSS={getFilterCSS}
+        onViewfinderClick={handleViewfinderClick}
+      />
 
-        {/* Self-Timer Countdown Overlay */}
-        {countdown !== null && (
-          <div className="absolute inset-0 z-40 bg-black/60 backdrop-blur-sm flex items-center justify-center">
-            <div className="text-7xl md:text-9xl font-black text-amber-400 font-mono animate-bounce drop-shadow-[0_0_25px_rgba(251,191,36,0.8)]">
-              {countdown}
-            </div>
-          </div>
-        )}
-
-        {useLiveWebcam ? (
-          <video
-            ref={videoRef}
-            playsInline
-            muted
-            className="w-full h-full object-cover transition-all duration-150"
-            style={{ filter: getFilterCSS() }}
-          />
-        ) : (
-          <div className="relative w-full h-full overflow-hidden">
-            <img
-              src={customImage || SAMPLE_PRACTICE_SCENES[mode]}
-              alt="Practice scene"
-              className="w-full h-full object-cover transition-all duration-150"
-              style={{ filter: getFilterCSS() }}
-            />
-            <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-amber-300 font-medium border border-amber-500/30">
-              {customImage ? 'Custom Practice Image' : 'Practice Scene Mode'}
-            </div>
-          </div>
-        )}
-
-        {/* Tap To Focus Target Reticle Overlay */}
-        {focusTarget && (
-          <div
-            className="absolute z-30 pointer-events-none -translate-x-1/2 -translate-y-1/2 w-12 h-12 border-2 border-amber-400 rounded-full flex items-center justify-center animate-ping"
-            style={{ left: `${focusTarget.x}%`, top: `${focusTarget.y}%` }}
-          >
-            <Focus className="w-6 h-6 text-amber-400" />
-          </div>
-        )}
-
-        {/* Aspect Ratio Letterbox Overlay */}
-        <AspectRatioMask aspectRatio={manualSettings.aspectRatio} />
-
-        {/* Composition HUD Overlays */}
-        <CompositionGuides guide={guide} tiltAngle={tiltAngle} />
-
-        {/* Photog Coaching Headers */}
-        <CoachOverlay
-          mode={mode}
-          guide={guide}
-          tiltAngle={tiltAngle}
-          avgBrightness={lumData.avgBrightness}
-          overexposedPercent={lumData.overexposedPercent}
-        />
-
-        {/* Histogram Overlay */}
-        {showHistogram && (
-          <div className="absolute bottom-4 right-4 z-20 hidden sm:block">
-            <LightingHistogram data={lumData} />
-          </div>
-        )}
-      </div>
-
-      {/* Manual Controls & Film Profiles Drawer */}
+      {/* Pro Tuning Controls Drawer */}
       {showManualTuning && (
         <div className="w-full p-3 bg-slate-950 border-t border-slate-800">
           <ManualControls settings={manualSettings} onChangeSettings={setManualSettings} />
         </div>
       )}
 
-      {/* Camera Control Panel */}
+      {/* Bottom Control Deck */}
       <div className="w-full bg-slate-900 border-t border-slate-800 p-3 md:p-4 space-y-3">
-        {/* Row 1: Mode Selectors & Overlays */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          {/* Mode Selector */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-400 font-medium">Mode:</span>
-            <Select value={mode} onValueChange={(val) => setMode(val as PhotographyMode)}>
-              <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-slate-100 text-xs h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-slate-100">
-                <SelectItem value="portrait">👤 Portrait</SelectItem>
-                <SelectItem value="landscape">🌄 Landscape</SelectItem>
-                <SelectItem value="architecture">🏛️ Architecture</SelectItem>
-                <SelectItem value="macro">🔍 Macro / Still</SelectItem>
-                <SelectItem value="street">🏙️ Street</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <CameraToolbar
+          mode={mode}
+          setMode={setMode}
+          guide={guide}
+          setGuide={setGuide}
+          timerDuration={timerDuration}
+          setTimerDuration={setTimerDuration}
+          showManualTuning={showManualTuning}
+          setShowManualTuning={setShowManualTuning}
+          showHistogram={showHistogram}
+          setShowHistogram={setShowHistogram}
+        />
 
-          {/* Composition Guide Toggle Buttons */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-slate-400 font-medium">Grid:</span>
-            <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
-              <button
-                onClick={() => setGuide('thirds')}
-                className={`px-2 py-1 rounded-md transition-colors ${guide === 'thirds' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
-              >
-                Thirds
-              </button>
-              <button
-                onClick={() => setGuide('golden_spiral')}
-                className={`px-2 py-1 rounded-md transition-colors ${guide === 'golden_spiral' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
-              >
-                Spiral
-              </button>
-              <button
-                onClick={() => setGuide('leading_lines')}
-                className={`px-2 py-1 rounded-md transition-colors ${guide === 'leading_lines' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
-              >
-                Lines
-              </button>
-              <button
-                onClick={() => setGuide('center')}
-                className={`px-2 py-1 rounded-md transition-colors ${guide === 'center' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
-              >
-                Center
-              </button>
-              <button
-                onClick={() => setGuide('framing')}
-                className={`px-2 py-1 rounded-md transition-colors ${guide === 'framing' ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300'}`}
-              >
-                Frame
-              </button>
-            </div>
-          </div>
-
-          {/* Self-Timer & Quick Tools */}
-          <div className="flex items-center gap-1">
-            {/* Self Timer Button */}
-            <div className="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
-              <button
-                onClick={() => setTimerDuration(0)}
-                className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 0 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
-              >
-                Timer Off
-              </button>
-              <button
-                onClick={() => setTimerDuration(3)}
-                className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 3 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
-              >
-                3s
-              </button>
-              <button
-                onClick={() => setTimerDuration(5)}
-                className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 5 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
-              >
-                5s
-              </button>
-              <button
-                onClick={() => setTimerDuration(10)}
-                className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 10 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
-              >
-                10s
-              </button>
-            </div>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowManualTuning(!showManualTuning)}
-              className={`h-8 text-xs border-slate-700 ${
-                showManualTuning ? 'bg-emerald-950 border-emerald-500/50 text-emerald-300' : 'bg-slate-800 text-slate-300'
-              }`}
-            >
-              <Sliders className="w-3.5 h-3.5 mr-1" />
-              Pro Tuning
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowHistogram(!showHistogram)}
-              className={`h-8 text-xs border-slate-700 ${
-                showHistogram ? 'bg-amber-950/60 border-amber-500/40 text-amber-300' : 'bg-slate-800 text-slate-300'
-              }`}
-            >
-              <Sun className="w-3.5 h-3.5 mr-1 text-amber-400" />
-              Histogram
-            </Button>
-          </div>
-        </div>
-
-        {/* Row 2: Shutter Button & Toggles */}
-        <div className="flex items-center justify-between pt-1">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setUseLiveWebcam(!useLiveWebcam)}
-              className="h-9 text-xs bg-slate-800 border-slate-700 text-slate-200"
-            >
-              {useLiveWebcam ? (
-                <>
-                  <Camera className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Live WebCam
-                </>
-              ) : (
-                <>
-                  <ImageIcon className="w-3.5 h-3.5 mr-1 text-amber-400" /> Practice Scene
-                </>
-              )}
-            </Button>
-
-            {!useLiveWebcam && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                className="h-9 text-xs bg-slate-800 border-slate-700 text-purple-300 hover:text-purple-200"
-              >
-                <Upload className="w-3.5 h-3.5 mr-1 text-purple-400" /> Upload Image
-              </Button>
-            )}
-
-            {useLiveWebcam && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'))}
-                className="h-9 w-9 p-0 bg-slate-800 border-slate-700 text-slate-300"
-              >
-                <SwitchCamera className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
-
-          {/* MAIN SHUTTER BUTTON */}
-          <button
-            onClick={handleShutter}
-            disabled={isCapturing || countdown !== null}
-            className="group relative w-14 h-14 rounded-full bg-slate-900 border-4 border-emerald-400 p-1 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all duration-150"
-          >
-            <div className="w-full h-full rounded-full bg-emerald-500 group-hover:bg-emerald-400 transition-colors flex items-center justify-center">
-              <Camera className="w-6 h-6 text-slate-950" />
-            </div>
-          </button>
-
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenAchievements}
-              className="h-9 text-xs bg-slate-800 border-slate-700 text-amber-300 hover:bg-slate-700"
-            >
-              <Award className="w-3.5 h-3.5 mr-1 text-amber-400" />
-              Badges
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTiltAngle(0)}
-              className="h-9 text-xs bg-slate-800 border-slate-700 text-slate-300 hover:text-emerald-300"
-            >
-              <RotateCcw className="w-3.5 h-3.5 mr-1" />
-              Straighten
-            </Button>
-          </div>
-        </div>
+        <CameraShutterBar
+          useLiveWebcam={useLiveWebcam}
+          setUseLiveWebcam={setUseLiveWebcam}
+          onTriggerFileUpload={() => fileInputRef.current?.click()}
+          facingMode={facingMode}
+          setFacingMode={setFacingMode}
+          onShutter={handleShutter}
+          isCapturing={isCapturing}
+          countdown={countdown}
+          onOpenAchievements={onOpenAchievements}
+          onStraighten={() => setTiltAngle(0)}
+        />
       </div>
     </div>
   );
