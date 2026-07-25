@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { CompositionGuideType, PhotographyMode, CapturedPhoto, CameraManualSettings } from '../types/camera';
+import { CompositionGuideType, PhotographyMode, CapturedPhoto, CameraManualSettings, CameraRecipe } from '../types/camera';
 import { CameraViewport } from './camera/CameraViewport';
 import { CameraToolbar } from './camera/CameraToolbar';
 import { CameraShutterBar } from './camera/CameraShutterBar';
@@ -64,6 +64,7 @@ export const CameraView: React.FC<CameraViewProps> = ({
     lightDirection: 'golden_hour',
     focalLength: 50,
     subjectDistance: 2.5,
+    meteringMode: 'matrix'
   });
 
   const [lumData, setLumData] = useState<ImageLuminanceData>({
@@ -75,6 +76,15 @@ export const CameraView: React.FC<CameraViewProps> = ({
   });
 
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
+
+  const handleApplyRecipe = (recipe: CameraRecipe) => {
+    setGuide(recipe.guide);
+    setMode(recipe.mode);
+    setManualSettings((prev) => ({
+      ...prev,
+      ...recipe.settings,
+    }));
+  };
 
   const getFilterCSS = useCallback(() => {
     let brightnessPct = Math.max(30, Math.min(180, 100 + manualSettings.exposureEv * 25));
@@ -322,7 +332,11 @@ export const CameraView: React.FC<CameraViewProps> = ({
       {/* Pro Tuning Controls Drawer */}
       {showManualTuning && (
         <div className="w-full p-3 bg-slate-950 border-t border-slate-800">
-          <ManualControls settings={manualSettings} onChangeSettings={setManualSettings} />
+          <ManualControls
+            settings={manualSettings}
+            onChangeSettings={setManualSettings}
+            onApplyRecipe={handleApplyRecipe}
+          />
         </div>
       )}
 

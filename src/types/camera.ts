@@ -8,6 +8,8 @@ export type FilmPresetType = 'standard' | 'monochrome' | 'kodachrome' | 'teal_or
 
 export type LightDirectionType = 'golden_hour' | 'soft_side' | 'midday_harsh' | 'backlit';
 
+export type MeteringModeType = 'matrix' | 'center_weighted' | 'spot';
+
 export interface PhotoAnalysis {
   overallScore: number;
   compositionScore: number;
@@ -33,6 +35,17 @@ export interface CameraManualSettings {
   lightDirection: LightDirectionType;
   focalLength: number; // 16mm, 24mm, 35mm, 50mm, 85mm, 135mm, 200mm
   subjectDistance: number; // 0.5m to 15m
+  meteringMode: MeteringModeType;
+}
+
+export interface CameraRecipe {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  guide: CompositionGuideType;
+  mode: PhotographyMode;
+  settings: Partial<CameraManualSettings>;
 }
 
 export interface CapturedPhoto {
