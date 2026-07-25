@@ -6,7 +6,6 @@ import { PhotoReviewModal } from '../components/PhotoReviewModal';
 import { AcademyModal } from '../components/AcademyModal';
 import { AchievementsModal } from '../components/AchievementsModal';
 import { PhotoComparisonModal } from '../components/PhotoComparisonModal';
-import { LightingDiagrams } from '../components/LightingDiagrams';
 import { Gallery } from '../components/Gallery';
 import { calculateAchievements } from '../utils/achievements';
 import { MadeWithDyad } from '../components/made-with-dyad';
@@ -89,11 +88,6 @@ const Index: React.FC = () => {
             onOpenAcademy={() => setIsAcademyOpen(true)}
             onOpenAchievements={() => setIsAchievementsOpen(true)}
           />
-        </section>
-
-        {/* Studio & Natural Overhead Lighting Diagrams */}
-        <section>
-          <LightingDiagrams />
         </section>
 
         {/* Portfolio Gallery */}
