@@ -3,8 +3,9 @@ import { CapturedPhoto } from '../types/camera';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Sliders, Sun, Flame, Contrast, Palette, RotateCcw, Save, Sparkles, Eye } from 'lucide-react';
+import { Sliders, Sun, Flame, Contrast, Palette, RotateCcw, Save, Sparkles, Eye, Wand2, Loader2 } from 'lucide-react';
 import { analyzeCanvasLuminance, generatePhotoScore } from '../utils/imageAnalysis';
+import { enhancePhotoWithAI } from '../utils/aiEnhancer';
 import { showSuccess } from '../utils/toast';
 
 interface PhotoEditorModalProps {
@@ -25,6 +26,7 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
   const [vignette, setVignette] = useState<number>(0);
   const [previewDataUrl, setPreviewDataUrl] = useState<string>(photo.dataUrl);
   const [newScore, setNewScore] = useState<number>(photo.analysis.overallScore);
+  const [isEnhancing, setIsEnhancing] = useState<boolean>(false);
 
   const handleReset = () => {
     setBrightness(0);
@@ -117,6 +119,20 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
     onClose();
   };
 
+  const handleAIEnhance = async () => {
+    setIsEnhancing(true);
+    try {
+      const result = await enhancePhotoWithAI(photo);
+      onSaveEditedPhoto(result.enhancedPhoto);
+      showSuccess(`AI Auto-Enhance finished! Rating boosted to ${result.enhancedPhoto.analysis.overallScore}/100.`);
+      onClose();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
   const scoreDiff = newScore - photo.analysis.overallScore;
 
   return (
@@ -130,9 +146,27 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
               <Sliders className="w-5 h-5 text-amber-400" />
               Darkroom Post-Processing Laboratory
             </DialogTitle>
-            <Button onClick={handleReset} variant="outline" size="sm" className="text-xs bg-zinc-900 border-zinc-800 text-amber-400">
-              <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reset Sliders
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleAIEnhance}
+                disabled={isEnhancing}
+                size="sm"
+                className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs"
+              >
+                {isEnhancing ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> AI Enhancing...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-3.5 h-3.5 mr-1" /> AI Auto-Enhance
+                  </>
+                )}
+              </Button>
+              <Button onClick={handleReset} variant="outline" size="sm" className="text-xs bg-zinc-900 border-zinc-800 text-amber-400">
+                <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reset Sliders
+              </Button>
+            </div>
           </div>
           <DialogDescription className="text-zinc-400 text-xs">
             Fine-tune exposure, contrast balance, color warmth, and vignette intensity in real-time.

@@ -4,8 +4,9 @@ import { PhotoEditorModal } from './PhotoEditorModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Award, CheckCircle, AlertTriangle, Download, Trash2, Camera, Sparkles, FileText, Info, Sliders } from 'lucide-react';
+import { Award, CheckCircle, AlertTriangle, Download, Trash2, Camera, Sparkles, FileText, Info, Sliders, Wand2, Loader2 } from 'lucide-react';
 import { showSuccess } from '../utils/toast';
+import { enhancePhotoWithAI } from '../utils/aiEnhancer';
 
 interface PhotoReviewModalProps {
   photo: CapturedPhoto | null;
@@ -24,10 +25,13 @@ export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({
 }) => {
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [notesText, setNotesText] = useState<string>('');
+  const [isEnhancing, setIsEnhancing] = useState<boolean>(false);
+  const [aiChanges, setAiChanges] = useState<string[] | null>(null);
 
   React.useEffect(() => {
     if (photo) {
       setNotesText(photo.notes || '');
+      setAiChanges(null);
     }
   }, [photo]);
 
@@ -51,6 +55,22 @@ export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({
     }
   };
 
+  const handleAIEnhance = async () => {
+    setIsEnhancing(true);
+    try {
+      const result = await enhancePhotoWithAI(photo);
+      setAiChanges(result.enhancementsMade);
+      if (onSaveEditedPhoto) {
+        onSaveEditedPhoto(result.enhancedPhoto);
+      }
+      showSuccess(`AI Auto-Enhancement complete! Score increased by +${result.scoreImprovement} pts.`);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
   return (
     <>
       <Dialog open={!!photo && !isEditorOpen} onOpenChange={(open) => !open && onClose()}>
@@ -70,6 +90,20 @@ export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({
             </DialogDescription>
           </DialogHeader>
 
+          {/* AI Enhancement notification banner */}
+          {aiChanges && aiChanges.length > 0 && (
+            <div className="bg-amber-950/60 border border-amber-500/50 rounded-xl p-3 text-xs space-y-1">
+              <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                <Wand2 className="w-4 h-4 text-amber-400" /> AI Photo Enhancements Applied:
+              </div>
+              <ul className="list-disc list-inside text-zinc-200 pl-1 space-y-0.5">
+                {aiChanges.map((change, idx) => (
+                  <li key={idx}>{change}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-2">
             {/* Photo Image Display */}
             <div className="flex flex-col gap-3">
@@ -86,14 +120,34 @@ export const PhotoReviewModal: React.FC<PhotoReviewModalProps> = ({
                 </div>
               </div>
 
-              {/* Action row to launch editor */}
-              <Button
-                onClick={() => setIsEditorOpen(true)}
-                className="w-full bg-zinc-900 hover:bg-zinc-800 border border-amber-500/40 text-amber-300 text-xs font-semibold"
-              >
-                <Sliders className="w-3.5 h-3.5 mr-1.5" />
-                Edit in Darkroom Laboratory
-              </Button>
+              {/* Action Buttons: AI Auto Enhance & Manual Darkroom Editor */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  onClick={handleAIEnhance}
+                  disabled={isEnhancing}
+                  className="bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold shadow-md shadow-amber-500/20"
+                >
+                  {isEnhancing ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      Optimizing...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-3.5 h-3.5 mr-1.5" />
+                      AI Auto-Enhance
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  onClick={() => setIsEditorOpen(true)}
+                  className="bg-zinc-900 hover:bg-zinc-800 border border-amber-500/40 text-amber-300 text-xs font-semibold"
+                >
+                  <Sliders className="w-3.5 h-3.5 mr-1.5" />
+                  Manual Editor
+                </Button>
+              </div>
 
               {/* EXIF Metadata Card */}
               <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3 text-xs space-y-1.5">
