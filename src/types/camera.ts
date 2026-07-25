@@ -31,6 +31,8 @@ export interface CameraManualSettings {
   filmPreset: FilmPresetType;
   aspectRatio: AspectRatioType;
   lightDirection: LightDirectionType;
+  focalLength: number; // 16mm, 24mm, 35mm, 50mm, 85mm, 135mm, 200mm
+  subjectDistance: number; // 0.5m to 15m
 }
 
 export interface CapturedPhoto {

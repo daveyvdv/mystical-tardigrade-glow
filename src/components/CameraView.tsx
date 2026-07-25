@@ -61,7 +61,9 @@ export const CameraView: React.FC<CameraViewProps> = ({
     iso: 200,
     filmPreset: 'standard',
     aspectRatio: '3:2',
-    lightDirection: 'golden_hour'
+    lightDirection: 'golden_hour',
+    focalLength: 50,
+    subjectDistance: 2.5,
   });
 
   const [lumData, setLumData] = useState<ImageLuminanceData>({

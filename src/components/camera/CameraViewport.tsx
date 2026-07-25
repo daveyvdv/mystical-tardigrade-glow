@@ -42,6 +42,9 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
   getFilterCSS,
   onViewfinderClick,
 }) => {
+  // Focal length zoom scale factor relative to 50mm baseline
+  const focalScale = Math.max(0.75, Math.min(2.5, 1 + (manualSettings.focalLength - 50) / 120));
+
   return (
     <div
       onClick={onViewfinderClick}
@@ -64,18 +67,24 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
           ref={videoRef}
           playsInline
           muted
-          className="w-full h-full object-cover transition-all duration-150"
-          style={{ filter: getFilterCSS() }}
+          className="w-full h-full object-cover transition-transform duration-300 ease-out"
+          style={{
+            filter: getFilterCSS(),
+            transform: `scale(${focalScale})`,
+          }}
         />
       ) : (
         <div className="relative w-full h-full overflow-hidden">
           <img
             src={customImage || sampleSceneUrl}
             alt="Practice scene"
-            className="w-full h-full object-cover transition-all duration-150"
-            style={{ filter: getFilterCSS() }}
+            className="w-full h-full object-cover transition-transform duration-300 ease-out"
+            style={{
+              filter: getFilterCSS(),
+              transform: `scale(${focalScale})`,
+            }}
           />
-          <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-amber-300 font-medium border border-amber-500/30">
+          <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-amber-300 font-medium border border-amber-500/30 z-20">
             {customImage ? 'Custom Practice Image' : 'Practice Scene Mode'}
           </div>
         </div>
@@ -105,6 +114,11 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
         avgBrightness={lumData.avgBrightness}
         overexposedPercent={lumData.overexposedPercent}
       />
+
+      {/* Focal length indicator overlay badge */}
+      <div className="absolute bottom-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto z-20 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded border border-cyan-500/40 font-mono text-[11px] text-cyan-300 font-semibold shadow-lg">
+        Lens: {manualSettings.focalLength}mm
+      </div>
 
       {/* Histogram Overlay */}
       {showHistogram && (
