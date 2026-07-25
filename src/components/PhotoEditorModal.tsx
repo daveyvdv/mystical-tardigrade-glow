@@ -3,9 +3,9 @@ import { CapturedPhoto } from '../types/camera';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Sliders, Sun, Flame, Contrast, Palette, RotateCcw, Save, Sparkles, Eye, Wand2, Loader2 } from 'lucide-react';
+import { Sliders, Sun, Flame, Contrast, Palette, RotateCcw, Save, Sparkles, Eye, Wand2, Loader2, User, Mountain, Film, Moon, Focus } from 'lucide-react';
 import { analyzeCanvasLuminance, generatePhotoScore } from '../utils/imageAnalysis';
-import { enhancePhotoWithAI } from '../utils/aiEnhancer';
+import { enhancePhotoWithAI, AISpecialtyPreset } from '../utils/aiEnhancer';
 import { showSuccess } from '../utils/toast';
 
 interface PhotoEditorModalProps {
@@ -27,6 +27,7 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
   const [previewDataUrl, setPreviewDataUrl] = useState<string>(photo.dataUrl);
   const [newScore, setNewScore] = useState<number>(photo.analysis.overallScore);
   const [isEnhancing, setIsEnhancing] = useState<boolean>(false);
+  const [activeAIPreset, setActiveAIPreset] = useState<AISpecialtyPreset | null>(null);
 
   const handleReset = () => {
     setBrightness(0);
@@ -34,6 +35,9 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
     setSaturation(0);
     setTemperature(0);
     setVignette(0);
+    setActiveAIPreset(null);
+    setPreviewDataUrl(photo.dataUrl);
+    setNewScore(photo.analysis.overallScore);
   };
 
   const renderEdits = useCallback(() => {
@@ -92,8 +96,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
   }, [photo, brightness, contrast, saturation, temperature, vignette]);
 
   useEffect(() => {
-    renderEdits();
-  }, [renderEdits]);
+    if (!activeAIPreset) {
+      renderEdits();
+    }
+  }, [renderEdits, activeAIPreset]);
 
   const handleSave = () => {
     const canvas = canvasRef.current;
@@ -119,13 +125,14 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
     onClose();
   };
 
-  const handleAIEnhance = async () => {
+  const handleRunAITool = async (preset: AISpecialtyPreset = 'auto') => {
     setIsEnhancing(true);
+    setActiveAIPreset(preset);
     try {
-      const result = await enhancePhotoWithAI(photo);
-      onSaveEditedPhoto(result.enhancedPhoto);
-      showSuccess(`AI Auto-Enhance finished! Rating boosted to ${result.enhancedPhoto.analysis.overallScore}/100.`);
-      onClose();
+      const result = await enhancePhotoWithAI(photo, preset);
+      setPreviewDataUrl(result.enhancedPhoto.dataUrl);
+      setNewScore(result.enhancedPhoto.analysis.overallScore);
+      showSuccess(`Applied AI ${preset.replace('_', ' ')}! Rating boosted to ${result.enhancedPhoto.analysis.overallScore}/100.`);
     } catch (e) {
       console.error(e);
     } finally {
@@ -147,31 +154,128 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
               Darkroom Post-Processing Laboratory
             </DialogTitle>
             <div className="flex items-center gap-2">
-              <Button
-                onClick={handleAIEnhance}
-                disabled={isEnhancing}
-                size="sm"
-                className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs"
-              >
-                {isEnhancing ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> AI Enhancing...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-3.5 h-3.5 mr-1" /> AI Auto-Enhance
-                  </>
-                )}
-              </Button>
               <Button onClick={handleReset} variant="outline" size="sm" className="text-xs bg-zinc-900 border-zinc-800 text-amber-400">
                 <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reset Sliders
               </Button>
             </div>
           </div>
           <DialogDescription className="text-zinc-400 text-xs">
-            Fine-tune exposure, contrast balance, color warmth, and vignette intensity in real-time.
+            Utilize AI smart tools to enhance exposure, color balance, skin tone, and dynamic contrast, or manually fine-tune with precision sliders.
           </DialogDescription>
         </DialogHeader>
+
+        {/* AI SMART ENHANCEMENT TOOLBAR */}
+        <div className="bg-zinc-900/90 border border-amber-500/40 rounded-xl p-3 text-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 font-bold text-amber-300">
+              <Wand2 className="w-4 h-4 text-amber-400" />
+              <span>AI Darkroom Retouch Tools (1-Click Enhancers)</span>
+            </div>
+            {isEnhancing && (
+              <span className="flex items-center gap-1 text-[11px] text-amber-400 font-mono">
+                <Loader2 className="w-3 h-3 animate-spin" /> AI Processing...
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-6 gap-1.5">
+            <button
+              onClick={() => handleRunAITool('auto')}
+              disabled={isEnhancing}
+              className={`p-2 rounded-lg border text-left flex flex-col items-start gap-1 transition-all ${
+                activeAIPreset === 'auto'
+                  ? 'bg-amber-500 border-amber-300 text-zinc-950 font-bold shadow-md'
+                  : 'bg-zinc-950 border-zinc-800 text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-1 text-[11px] font-bold">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Smart Auto</span>
+              </div>
+              <span className="text-[9px] text-zinc-400 leading-tight">Exposure & Contrast</span>
+            </button>
+
+            <button
+              onClick={() => handleRunAITool('portrait_glow')}
+              disabled={isEnhancing}
+              className={`p-2 rounded-lg border text-left flex flex-col items-start gap-1 transition-all ${
+                activeAIPreset === 'portrait_glow'
+                  ? 'bg-amber-500 border-amber-300 text-zinc-950 font-bold shadow-md'
+                  : 'bg-zinc-950 border-zinc-800 text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-1 text-[11px] font-bold">
+                <User className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Portrait Glow</span>
+              </div>
+              <span className="text-[9px] text-zinc-400 leading-tight">Warm Skin & Vignette</span>
+            </button>
+
+            <button
+              onClick={() => handleRunAITool('landscape_pop')}
+              disabled={isEnhancing}
+              className={`p-2 rounded-lg border text-left flex flex-col items-start gap-1 transition-all ${
+                activeAIPreset === 'landscape_pop'
+                  ? 'bg-amber-500 border-amber-300 text-zinc-950 font-bold shadow-md'
+                  : 'bg-zinc-950 border-zinc-800 text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-1 text-[11px] font-bold">
+                <Mountain className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Landscape Pop</span>
+              </div>
+              <span className="text-[9px] text-zinc-400 leading-tight">Sky Blue & Foliage</span>
+            </button>
+
+            <button
+              onClick={() => handleRunAITool('cinema_grade')}
+              disabled={isEnhancing}
+              className={`p-2 rounded-lg border text-left flex flex-col items-start gap-1 transition-all ${
+                activeAIPreset === 'cinema_grade'
+                  ? 'bg-amber-500 border-amber-300 text-zinc-950 font-bold shadow-md'
+                  : 'bg-zinc-950 border-zinc-800 text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-1 text-[11px] font-bold">
+                <Film className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Cinema Tone</span>
+              </div>
+              <span className="text-[9px] text-zinc-400 leading-tight">Teal & Orange Grade</span>
+            </button>
+
+            <button
+              onClick={() => handleRunAITool('monochrome_hdr')}
+              disabled={isEnhancing}
+              className={`p-2 rounded-lg border text-left flex flex-col items-start gap-1 transition-all ${
+                activeAIPreset === 'monochrome_hdr'
+                  ? 'bg-amber-500 border-amber-300 text-zinc-950 font-bold shadow-md'
+                  : 'bg-zinc-950 border-zinc-800 text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-1 text-[11px] font-bold">
+                <Moon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Noir B&W</span>
+              </div>
+              <span className="text-[9px] text-zinc-400 leading-tight">Deep B&W Curves</span>
+            </button>
+
+            <button
+              onClick={() => handleRunAITool('detail_sharpen')}
+              disabled={isEnhancing}
+              className={`p-2 rounded-lg border text-left flex flex-col items-start gap-1 transition-all ${
+                activeAIPreset === 'detail_sharpen'
+                  ? 'bg-amber-500 border-amber-300 text-zinc-950 font-bold shadow-md'
+                  : 'bg-zinc-950 border-zinc-800 text-zinc-200 hover:border-amber-500/50 hover:bg-zinc-900'
+              }`}
+            >
+              <div className="flex items-center gap-1 text-[11px] font-bold">
+                <Focus className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Detail Sharpen</span>
+              </div>
+              <span className="text-[9px] text-zinc-400 leading-tight">Micro-Contrast Edge</span>
+            </button>
+          </div>
+        </div>
 
         {/* Live Score Change Banner */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between text-xs">
@@ -199,7 +303,7 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
 
           {/* Controls Panel */}
           <div className="space-y-4 bg-zinc-900/60 p-4 rounded-xl border border-zinc-800 text-xs">
-            <h4 className="font-bold text-white border-b border-zinc-800 pb-2">Image Adjustments</h4>
+            <h4 className="font-bold text-white border-b border-zinc-800 pb-2">Manual Fine-Tuning Sliders</h4>
 
             {/* Brightness */}
             <div className="space-y-1.5">
@@ -214,7 +318,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
                 min={-50}
                 max={50}
                 step={1}
-                onValueChange={([val]) => setBrightness(val)}
+                onValueChange={([val]) => {
+                  setActiveAIPreset(null);
+                  setBrightness(val);
+                }}
                 className="cursor-pointer"
               />
             </div>
@@ -232,7 +339,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
                 min={-50}
                 max={50}
                 step={1}
-                onValueChange={([val]) => setContrast(val)}
+                onValueChange={([val]) => {
+                  setActiveAIPreset(null);
+                  setContrast(val);
+                }}
                 className="cursor-pointer"
               />
             </div>
@@ -250,7 +360,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
                 min={-50}
                 max={50}
                 step={1}
-                onValueChange={([val]) => setSaturation(val)}
+                onValueChange={([val]) => {
+                  setActiveAIPreset(null);
+                  setSaturation(val);
+                }}
                 className="cursor-pointer"
               />
             </div>
@@ -268,7 +381,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
                 min={-50}
                 max={50}
                 step={1}
-                onValueChange={([val]) => setTemperature(val)}
+                onValueChange={([val]) => {
+                  setActiveAIPreset(null);
+                  setTemperature(val);
+                }}
                 className="cursor-pointer"
               />
             </div>
@@ -286,7 +402,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
                 min={0}
                 max={100}
                 step={1}
-                onValueChange={([val]) => setVignette(val)}
+                onValueChange={([val]) => {
+                  setActiveAIPreset(null);
+                  setVignette(val);
+                }}
                 className="cursor-pointer"
               />
             </div>

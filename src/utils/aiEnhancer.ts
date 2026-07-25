@@ -1,6 +1,14 @@
 import { CapturedPhoto } from '../types/camera';
 import { analyzeCanvasLuminance, generatePhotoScore } from './imageAnalysis';
 
+export type AISpecialtyPreset =
+  | 'auto'
+  | 'portrait_glow'
+  | 'landscape_pop'
+  | 'cinema_grade'
+  | 'monochrome_hdr'
+  | 'detail_sharpen';
+
 export interface AIEnhancementResult {
   enhancedPhoto: CapturedPhoto;
   enhancementsMade: string[];
@@ -9,10 +17,13 @@ export interface AIEnhancementResult {
 
 /**
  * AI Photo Improvement function.
- * Takes a CapturedPhoto, analyzes its visual luminance & composition metrics,
- * and renders an intelligently color-graded and exposure-balanced version.
+ * Takes a CapturedPhoto and an optional AI specialty preset,
+ * analyzes luminance metrics, and generates an optimized image.
  */
-export async function enhancePhotoWithAI(photo: CapturedPhoto): Promise<AIEnhancementResult> {
+export async function enhancePhotoWithAI(
+  photo: CapturedPhoto,
+  preset: AISpecialtyPreset = 'auto'
+): Promise<AIEnhancementResult> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -33,95 +44,110 @@ export async function enhancePhotoWithAI(photo: CapturedPhoto): Promise<AIEnhanc
         return;
       }
 
-      // First pass: analyze source luminance
       ctx.drawImage(img, 0, 0);
       const initialLum = analyzeCanvasLuminance(canvas);
 
       const enhancementsMade: string[] = [];
 
-      // Determine smart AI parameters based on image state
       let brightnessAdjust = 0;
       let contrastAdjust = 0;
       let saturationAdjust = 0;
       let sepiaAdjust = 0;
       let hueAdjust = 0;
       let vignetteIntensity = 0;
+      let grayscale = false;
 
-      // 1. Exposure & Brightness Correction
-      if (initialLum.avgBrightness < 80) {
-        brightnessAdjust = Math.min(35, Math.round((128 - initialLum.avgBrightness) * 0.5));
-        enhancementsMade.push(`Boosted underexposed shadows (+${brightnessAdjust}% exposure)`);
-      } else if (initialLum.avgBrightness > 185) {
-        brightnessAdjust = -Math.min(25, Math.round((initialLum.avgBrightness - 140) * 0.4));
-        enhancementsMade.push(`Recovered clipped highlight details (${brightnessAdjust}% exposure)`);
-      } else {
-        brightnessAdjust = +5; // Gentle clarity bump
-        enhancementsMade.push('Fine-tuned midtone luminosity balance');
-      }
-
-      // 2. Dynamic Contrast Optimization
-      if (initialLum.contrast < 35) {
-        contrastAdjust = 20;
-        enhancementsMade.push('Enhanced flat contrast range (+20% dynamic depth)');
-      } else if (initialLum.contrast > 75) {
-        contrastAdjust = -10;
-        enhancementsMade.push('Softened harsh extreme shadows');
-      } else {
-        contrastAdjust = +8;
-        enhancementsMade.push('Optimized micro-contrast definition');
-      }
-
-      // 3. Mode-based Color Temperature & Saturation Enhancement
-      switch (photo.analysis.modeUsed) {
-        case 'portrait':
-          saturationAdjust = +12;
-          sepiaAdjust = 15; // Gentle warm skin tones
-          vignetteIntensity = 25; // Focus on face
-          enhancementsMade.push('Applied skin tone warming & portrait edge focus vignette');
+      switch (preset) {
+        case 'portrait_glow':
+          brightnessAdjust = +8;
+          contrastAdjust = +5;
+          saturationAdjust = +15;
+          sepiaAdjust = 20; // Soft skin tone warmth
+          vignetteIntensity = 30; // Focus on subject's face
+          enhancementsMade.push('AI Portrait Glow: Warmed skin tones & applied edge focus vignette');
           break;
 
-        case 'landscape':
-          saturationAdjust = +28;
-          contrastAdjust += 10;
-          hueAdjust = -5; // Deeper sky blues
-          enhancementsMade.push('Boosted sky & foliage saturation (+28%)');
+        case 'landscape_pop':
+          brightnessAdjust = initialLum.avgBrightness < 100 ? +12 : 0;
+          contrastAdjust = +22;
+          saturationAdjust = +32;
+          hueAdjust = -6; // Deep sky blues & vibrant foliage
+          enhancementsMade.push('AI Landscape Pop: Enhanced sky blues, foliage saturation & dynamic contrast (+32%)');
           break;
 
-        case 'architecture':
-          contrastAdjust += 15;
+        case 'cinema_grade':
+          brightnessAdjust = -4;
+          contrastAdjust = +25;
+          saturationAdjust = +18;
+          hueAdjust = -15; // Teal & Orange Hollywood tone curve
+          vignetteIntensity = 20;
+          enhancementsMade.push('AI Cinema Grade: Applied cinematic teal & orange color balance with shadow vignette');
+          break;
+
+        case 'monochrome_hdr':
+          grayscale = true;
+          contrastAdjust = +40;
+          brightnessAdjust = +5;
+          vignetteIntensity = 25;
+          enhancementsMade.push('AI High-Dynamic B&W: Converted to monochrome with deep contrast curve & shadow compression');
+          break;
+
+        case 'detail_sharpen':
+          contrastAdjust = +18;
           saturationAdjust = +10;
-          vignetteIntensity = 15;
-          enhancementsMade.push('Sharpened geometric line contrast & structure');
+          brightnessAdjust = initialLum.avgBrightness < 90 ? +15 : +5;
+          enhancementsMade.push('AI Detail Recovery: Sharpened micro-contrast and recovered shadow texture');
           break;
 
-        case 'street':
-          contrastAdjust += 18;
-          saturationAdjust = +15;
-          enhancementsMade.push('Applied cinematic documentary tone grade');
-          break;
-
-        case 'macro':
-          saturationAdjust = +22;
-          vignetteIntensity = 30;
-          enhancementsMade.push('Isolated macro center subject with radial vignette');
-          break;
-
+        case 'auto':
         default:
-          saturationAdjust = +15;
-          enhancementsMade.push('Enhanced natural color vibrancy');
+          // Smart adaptive rules
+          if (initialLum.avgBrightness < 80) {
+            brightnessAdjust = Math.min(35, Math.round((128 - initialLum.avgBrightness) * 0.5));
+            enhancementsMade.push(`Smart Exposure: Boosted underexposed shadows (+${brightnessAdjust}%)`);
+          } else if (initialLum.avgBrightness > 185) {
+            brightnessAdjust = -Math.min(25, Math.round((initialLum.avgBrightness - 140) * 0.4));
+            enhancementsMade.push(`Highlight Recovery: Reduced washed highlights (${brightnessAdjust}%)`);
+          } else {
+            brightnessAdjust = +6;
+            enhancementsMade.push('Luminosity Balancing: Fine-tuned midtone balance');
+          }
+
+          if (initialLum.contrast < 35) {
+            contrastAdjust = 20;
+            enhancementsMade.push('Contrast Engine: Enhanced flat range (+20%)');
+          } else {
+            contrastAdjust = +10;
+            enhancementsMade.push('Micro-Contrast: Sharpened subject edge definition');
+          }
+
+          if (photo.analysis.modeUsed === 'portrait') {
+            sepiaAdjust = 12;
+            vignetteIntensity = 22;
+            saturationAdjust = +12;
+            enhancementsMade.push('AI Mode Tuner: Warmed skin tones & added portrait edge vignette');
+          } else if (photo.analysis.modeUsed === 'landscape') {
+            saturationAdjust = +25;
+            hueAdjust = -4;
+            enhancementsMade.push('AI Mode Tuner: Boosted landscape vibrancy & sky depth');
+          } else {
+            saturationAdjust = +15;
+            enhancementsMade.push('Vibrance Boost: Enhanced natural color saturation');
+          }
           break;
       }
 
-      // Apply CSS Filters to Canvas Context
+      // Render edits onto Canvas
       const brightVal = 100 + brightnessAdjust;
       const contrastVal = 100 + contrastAdjust;
       const saturateVal = 100 + saturationAdjust;
+      const grayVal = grayscale ? 'grayscale(100%) ' : '';
 
-      ctx.filter = `brightness(${brightVal}%) contrast(${contrastVal}%) saturate(${saturateVal}%) sepia(${sepiaAdjust}%) hue-rotate(${hueAdjust}deg)`;
+      ctx.filter = `${grayVal}brightness(${brightVal}%) contrast(${contrastVal}%) saturate(${saturateVal}%) sepia(${sepiaAdjust}%) hue-rotate(${hueAdjust}deg)`;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       ctx.filter = 'none';
 
-      // 4. Apply Vignette Layer if applicable
+      // Vignette Overlay
       if (vignetteIntensity > 0) {
         const radius = Math.max(canvas.width, canvas.height) * 0.75;
         const gradient = ctx.createRadialGradient(
@@ -139,7 +165,6 @@ export async function enhancePhotoWithAI(photo: CapturedPhoto): Promise<AIEnhanc
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      // Generate updated image data
       const enhancedDataUrl = canvas.toDataURL('image/jpeg', 0.94);
       const postLumData = analyzeCanvasLuminance(canvas);
 
@@ -159,12 +184,12 @@ export async function enhancePhotoWithAI(photo: CapturedPhoto): Promise<AIEnhanc
           ...enhancedAnalysis,
           strengths: [
             ...enhancedAnalysis.strengths,
-            'AI Auto-Enhanced: Optimal exposure & color grading applied.',
+            `AI Enhanced (${preset}): Optimal exposure & color grading applied.`,
           ],
         },
         notes: photo.notes
-          ? `${photo.notes} | [AI Enhanced]`
-          : 'AI Auto-Enhanced shot.',
+          ? `${photo.notes} | [AI Enhanced: ${preset}]`
+          : `AI Enhanced (${preset}) shot.`,
       };
 
       resolve({
