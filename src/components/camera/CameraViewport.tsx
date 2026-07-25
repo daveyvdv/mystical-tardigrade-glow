@@ -42,7 +42,6 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
   getFilterCSS,
   onViewfinderClick,
 }) => {
-  // Focal length zoom scale factor relative to 50mm baseline
   const focalScale = Math.max(0.75, Math.min(2.5, 1 + (manualSettings.focalLength - 50) / 120));
 
   return (
@@ -84,7 +83,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
               transform: `scale(${focalScale})`,
             }}
           />
-          <div className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-amber-300 font-medium border border-amber-500/30 z-20">
+          <div className="absolute bottom-3 left-3 bg-zinc-950/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-amber-300 font-medium border border-amber-500/30 z-20">
             {customImage ? 'Custom Practice Image' : 'Practice Scene Mode'}
           </div>
         </div>
@@ -116,7 +115,7 @@ export const CameraViewport: React.FC<CameraViewportProps> = ({
       />
 
       {/* Focal length indicator overlay badge */}
-      <div className="absolute bottom-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto z-20 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded border border-cyan-500/40 font-mono text-[11px] text-cyan-300 font-semibold shadow-lg">
+      <div className="absolute bottom-3 right-3 sm:bottom-4 sm:left-4 sm:right-auto z-20 bg-zinc-950/85 backdrop-blur-md px-2.5 py-1 rounded border border-amber-500/40 font-mono text-[11px] text-amber-300 font-semibold shadow-lg">
         Lens: {manualSettings.focalLength}mm
       </div>
 

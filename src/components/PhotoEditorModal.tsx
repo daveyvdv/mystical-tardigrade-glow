@@ -18,11 +18,11 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const [brightness, setBrightness] = useState<number>(0); // -50 to +50
-  const [contrast, setContrast] = useState<number>(0); // -50 to +50
-  const [saturation, setSaturation] = useState<number>(0); // -50 to +50
-  const [temperature, setTemperature] = useState<number>(0); // -50 (cool) to +50 (warm)
-  const [vignette, setVignette] = useState<number>(0); // 0 to 100
+  const [brightness, setBrightness] = useState<number>(0);
+  const [contrast, setContrast] = useState<number>(0);
+  const [saturation, setSaturation] = useState<number>(0);
+  const [temperature, setTemperature] = useState<number>(0);
+  const [vignette, setVignette] = useState<number>(0);
   const [previewDataUrl, setPreviewDataUrl] = useState<string>(photo.dataUrl);
   const [newScore, setNewScore] = useState<number>(photo.analysis.overallScore);
 
@@ -47,7 +47,6 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
       canvas.width = img.width;
       canvas.height = img.height;
 
-      // Calculate CSS filter strings
       const brightVal = 100 + brightness;
       const contrastVal = 100 + contrast;
       const saturateVal = 100 + saturation;
@@ -57,7 +56,6 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
       ctx.filter = `brightness(${brightVal}%) contrast(${contrastVal}%) saturate(${saturateVal}%) sepia(${sepiaVal}%) hue-rotate(${hueVal}deg)`;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-      // Reset filter for Vignette overlay
       ctx.filter = 'none';
 
       if (vignette > 0) {
@@ -80,7 +78,6 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
       const editedUrl = canvas.toDataURL('image/jpeg', 0.92);
       setPreviewDataUrl(editedUrl);
 
-      // Re-evaluate photo quality metrics
       const lumData = analyzeCanvasLuminance(canvas);
       const updatedAnalysis = generatePhotoScore(
         lumData,
@@ -124,56 +121,56 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
 
   return (
     <Dialog open={!!photo} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 text-white p-4 md:p-6">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-zinc-950 border-amber-500/30 text-white p-4 md:p-6">
         <canvas ref={canvasRef} className="hidden" />
 
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-emerald-400">
-              <Sliders className="w-5 h-5 text-emerald-400" />
+            <DialogTitle className="text-xl font-bold flex items-center gap-2 text-amber-400">
+              <Sliders className="w-5 h-5 text-amber-400" />
               Darkroom Post-Processing Laboratory
             </DialogTitle>
-            <Button onClick={handleReset} variant="outline" size="sm" className="text-xs bg-slate-800 border-slate-700 text-amber-400">
+            <Button onClick={handleReset} variant="outline" size="sm" className="text-xs bg-zinc-900 border-zinc-800 text-amber-400">
               <RotateCcw className="w-3.5 h-3.5 mr-1" /> Reset Sliders
             </Button>
           </div>
-          <DialogDescription className="text-slate-400 text-xs">
+          <DialogDescription className="text-zinc-400 text-xs">
             Fine-tune exposure, contrast balance, color warmth, and vignette intensity in real-time.
           </DialogDescription>
         </DialogHeader>
 
         {/* Live Score Change Banner */}
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-amber-400" />
-            <span className="font-semibold text-slate-200">Re-calculated Score:</span>
+            <span className="font-semibold text-white">Re-calculated Score:</span>
             <span className="font-mono font-bold text-amber-400 text-sm">{newScore}/100</span>
           </div>
           <div className="font-mono text-xs font-semibold">
             {scoreDiff > 0 ? (
-              <span className="text-emerald-400">+{scoreDiff} pts Quality Gain! 📈</span>
+              <span className="text-amber-300">+{scoreDiff} pts Quality Gain! 📈</span>
             ) : scoreDiff < 0 ? (
               <span className="text-rose-400">{scoreDiff} pts lower</span>
             ) : (
-              <span className="text-slate-400">Unchanged</span>
+              <span className="text-zinc-400">Unchanged</span>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-2">
           {/* Live Edited Canvas Preview */}
-          <div className="aspect-[4/3] bg-black border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center p-1">
+          <div className="aspect-[4/3] bg-black border border-zinc-800 rounded-xl overflow-hidden flex items-center justify-center p-1">
             <img src={previewDataUrl} alt="Retouched shot preview" className="w-full h-full object-contain rounded-lg" />
           </div>
 
           {/* Controls Panel */}
-          <div className="space-y-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-xs">
-            <h4 className="font-bold text-slate-200 border-b border-slate-800 pb-2">Image Adjustments</h4>
+          <div className="space-y-4 bg-zinc-900/60 p-4 rounded-xl border border-zinc-800 text-xs">
+            <h4 className="font-bold text-white border-b border-zinc-800 pb-2">Image Adjustments</h4>
 
             {/* Brightness */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-slate-300 flex items-center gap-1.5">
+                <span className="text-zinc-300 flex items-center gap-1.5">
                   <Sun className="w-3.5 h-3.5 text-amber-400" /> Exposure / Brightness
                 </span>
                 <span className="font-mono text-amber-300 font-semibold">{brightness > 0 ? `+${brightness}` : brightness}</span>
@@ -191,10 +188,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
             {/* Contrast */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-slate-300 flex items-center gap-1.5">
-                  <Contrast className="w-3.5 h-3.5 text-emerald-400" /> Dynamic Contrast
+                <span className="text-zinc-300 flex items-center gap-1.5">
+                  <Contrast className="w-3.5 h-3.5 text-amber-400" /> Dynamic Contrast
                 </span>
-                <span className="font-mono text-emerald-300 font-semibold">{contrast > 0 ? `+${contrast}` : contrast}</span>
+                <span className="font-mono text-amber-300 font-semibold">{contrast > 0 ? `+${contrast}` : contrast}</span>
               </div>
               <Slider
                 value={[contrast]}
@@ -209,10 +206,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
             {/* Saturation */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-slate-300 flex items-center gap-1.5">
-                  <Palette className="w-3.5 h-3.5 text-purple-400" /> Color Saturation
+                <span className="text-zinc-300 flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-amber-400" /> Color Saturation
                 </span>
-                <span className="font-mono text-purple-300 font-semibold">{saturation > 0 ? `+${saturation}` : saturation}</span>
+                <span className="font-mono text-amber-300 font-semibold">{saturation > 0 ? `+${saturation}` : saturation}</span>
               </div>
               <Slider
                 value={[saturation]}
@@ -227,7 +224,7 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
             {/* Temperature */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-slate-300 flex items-center gap-1.5">
+                <span className="text-zinc-300 flex items-center gap-1.5">
                   <Flame className="w-3.5 h-3.5 text-amber-500" /> Color Temp (Warm / Cool)
                 </span>
                 <span className="font-mono text-amber-400 font-semibold">{temperature > 0 ? `Warm +${temperature}` : temperature < 0 ? `Cool ${temperature}` : 'Neutral'}</span>
@@ -245,10 +242,10 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
             {/* Vignette */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-slate-300 flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-cyan-400" /> Edge Vignette Darkening
+                <span className="text-zinc-300 flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-amber-400" /> Edge Vignette Darkening
                 </span>
-                <span className="font-mono text-cyan-300 font-semibold">{vignette}%</span>
+                <span className="font-mono text-amber-300 font-semibold">{vignette}%</span>
               </div>
               <Slider
                 value={[vignette]}
@@ -262,11 +259,11 @@ export const PhotoEditorModal: React.FC<PhotoEditorModalProps> = ({ photo, onClo
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-          <Button onClick={onClose} variant="outline" className="bg-slate-800 border-slate-700 text-slate-300 text-xs">
+        <div className="flex justify-end gap-2 pt-2 border-t border-zinc-800">
+          <Button onClick={onClose} variant="outline" className="bg-zinc-900 border-zinc-800 text-zinc-300 text-xs">
             Cancel
           </Button>
-          <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">
+          <Button onClick={handleSave} className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs">
             <Save className="w-3.5 h-3.5 mr-1.5" /> Save Retouched Photo
           </Button>
         </div>

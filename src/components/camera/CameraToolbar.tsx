@@ -33,12 +33,12 @@ export const CameraToolbar: React.FC<CameraToolbarProps> = ({
     <div className="flex flex-wrap items-center justify-between gap-2">
       {/* Mode Selector */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-slate-400 font-medium">Mode:</span>
+        <span className="text-xs text-zinc-400 font-medium">Mode:</span>
         <Select value={mode} onValueChange={(val) => setMode(val as PhotographyMode)}>
-          <SelectTrigger className="w-32 bg-slate-800 border-slate-700 text-slate-100 text-xs h-8">
+          <SelectTrigger className="w-32 bg-zinc-950 border-amber-500/30 text-white text-xs h-8">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-slate-800 border-slate-700 text-slate-100">
+          <SelectContent className="bg-zinc-900 border-amber-500/30 text-white">
             <SelectItem value="portrait">👤 Portrait</SelectItem>
             <SelectItem value="landscape">🌄 Landscape</SelectItem>
             <SelectItem value="architecture">🏛️ Architecture</SelectItem>
@@ -50,14 +50,14 @@ export const CameraToolbar: React.FC<CameraToolbarProps> = ({
 
       {/* Composition Guide Toggle Buttons */}
       <div className="flex items-center gap-1.5">
-        <span className="text-xs text-slate-400 font-medium">Grid:</span>
-        <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
+        <span className="text-xs text-zinc-400 font-medium">Grid:</span>
+        <div className="flex bg-zinc-950 p-0.5 rounded-lg border border-zinc-800 text-xs">
           {(['thirds', 'golden_spiral', 'leading_lines', 'center', 'framing'] as CompositionGuideType[]).map((g) => (
             <button
               key={g}
               onClick={() => setGuide(g)}
               className={`px-2 py-1 rounded-md transition-colors capitalize ${
-                guide === g ? 'bg-emerald-600 text-white font-medium' : 'text-slate-300 hover:text-white'
+                guide === g ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-300 hover:text-white'
               }`}
             >
               {g.replace('_', ' ')}
@@ -68,28 +68,28 @@ export const CameraToolbar: React.FC<CameraToolbarProps> = ({
 
       {/* Self-Timer & Quick Tools */}
       <div className="flex items-center gap-1">
-        <div className="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
+        <div className="flex items-center bg-zinc-950 p-0.5 rounded-lg border border-zinc-800 text-xs">
           <button
             onClick={() => setTimerDuration(0)}
-            className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 0 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
+            className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 0 ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-400'}`}
           >
             Timer Off
           </button>
           <button
             onClick={() => setTimerDuration(3)}
-            className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 3 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
+            className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 3 ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-400'}`}
           >
             3s
           </button>
           <button
             onClick={() => setTimerDuration(5)}
-            className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 5 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
+            className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 5 ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-400'}`}
           >
             5s
           </button>
           <button
             onClick={() => setTimerDuration(10)}
-            className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 10 ? 'bg-amber-600 text-white font-bold' : 'text-slate-400'}`}
+            className={`px-1.5 py-1 rounded text-[10px] font-mono ${timerDuration === 10 ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-400'}`}
           >
             10s
           </button>
@@ -99,8 +99,8 @@ export const CameraToolbar: React.FC<CameraToolbarProps> = ({
           variant="outline"
           size="sm"
           onClick={() => setShowManualTuning(!showManualTuning)}
-          className={`h-8 text-xs border-slate-700 ${
-            showManualTuning ? 'bg-emerald-950 border-emerald-500/50 text-emerald-300' : 'bg-slate-800 text-slate-300'
+          className={`h-8 text-xs border-zinc-800 ${
+            showManualTuning ? 'bg-amber-950/80 border-amber-500/50 text-amber-300' : 'bg-zinc-900 text-zinc-300 hover:text-white'
           }`}
         >
           <Sliders className="w-3.5 h-3.5 mr-1" />
@@ -111,8 +111,8 @@ export const CameraToolbar: React.FC<CameraToolbarProps> = ({
           variant="outline"
           size="sm"
           onClick={() => setShowHistogram(!showHistogram)}
-          className={`h-8 text-xs border-slate-700 ${
-            showHistogram ? 'bg-amber-950/60 border-amber-500/40 text-amber-300' : 'bg-slate-800 text-slate-300'
+          className={`h-8 text-xs border-zinc-800 ${
+            showHistogram ? 'bg-amber-950/60 border-amber-500/40 text-amber-300' : 'bg-zinc-900 text-zinc-300 hover:text-white'
           }`}
         >
           <Sun className="w-3.5 h-3.5 mr-1 text-amber-400" />

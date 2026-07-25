@@ -1,5 +1,5 @@
 import React from 'react';
-import { CameraManualSettings, FilmPresetType, AspectRatioType, LightDirectionType, MeteringModeType, CompositionGuideType, PhotographyMode, CameraRecipe } from '../types/camera';
+import { CameraManualSettings, CameraRecipe } from '../types/camera';
 import { FilmPresetSelector } from './FilmPresetSelector';
 import { DofCalculatorWidget } from './DofCalculatorWidget';
 import { CameraRecipesBar } from './CameraRecipesBar';
@@ -24,10 +24,10 @@ const FOCAL_LENGTH_PRESETS = [
 
 export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChangeSettings, onApplyRecipe }) => {
   return (
-    <div className="bg-slate-900/95 border border-slate-700/80 rounded-xl p-3 sm:p-4 text-xs text-slate-200 space-y-4 shadow-xl">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-        <div className="flex items-center gap-2 font-bold text-slate-100">
-          <Sliders className="w-4 h-4 text-emerald-400" />
+    <div className="bg-zinc-950 border border-amber-500/30 rounded-xl p-3 sm:p-4 text-xs text-white space-y-4 shadow-xl">
+      <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+        <div className="flex items-center gap-2 font-bold text-white">
+          <Sliders className="w-4 h-4 text-amber-400" />
           <span>Pro Manual Tuning, Lens Simulation & Film Styles</span>
         </div>
         <button
@@ -45,7 +45,7 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
               meteringMode: 'matrix'
             })
           }
-          className="text-[11px] text-amber-400 hover:underline"
+          className="text-[11px] text-amber-400 hover:underline font-medium"
         >
           Reset Defaults
         </button>
@@ -57,26 +57,26 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
       )}
 
       {/* Lens Focal Length Selection */}
-      <div className="space-y-2 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+      <div className="space-y-2 bg-zinc-900/60 p-3 rounded-xl border border-zinc-800">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-200">
-            <ZoomIn className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="flex items-center gap-1.5 font-semibold text-white">
+            <ZoomIn className="w-3.5 h-3.5 text-amber-400" />
             <span>Prime Lens Focal Length Field-of-View</span>
           </div>
-          <span className="font-mono text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
+          <span className="font-mono text-amber-300 font-bold bg-amber-950/80 px-2 py-0.5 rounded border border-amber-500/40">
             {settings.focalLength}mm
           </span>
         </div>
 
-        <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800 text-[11px] justify-between overflow-x-auto gap-1">
+        <div className="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-[11px] justify-between overflow-x-auto gap-1">
           {FOCAL_LENGTH_PRESETS.map((preset) => (
             <button
               key={preset.mm}
               onClick={() => onChangeSettings({ ...settings, focalLength: preset.mm })}
               className={`px-2 py-1 rounded transition-all whitespace-nowrap font-mono ${
                 settings.focalLength === preset.mm
-                  ? 'bg-cyan-600 text-white font-bold shadow-md shadow-cyan-600/30'
-                  : 'text-slate-300 hover:bg-slate-800'
+                  ? 'bg-amber-500 text-zinc-950 font-bold'
+                  : 'text-zinc-300 hover:bg-zinc-800'
               }`}
             >
               {preset.mm}mm
@@ -84,7 +84,7 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
           ))}
         </div>
 
-        <p className="text-[10px] text-slate-400 italic">
+        <p className="text-[10px] text-zinc-400 italic">
           💡 {FOCAL_LENGTH_PRESETS.find((f) => f.mm === settings.focalLength)?.tip}
         </p>
       </div>
@@ -100,16 +100,16 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
       />
 
       {/* Exposure Metering Mode */}
-      <div className="space-y-1.5 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-200">
-          <Crosshair className="w-3.5 h-3.5 text-emerald-400" />
+      <div className="space-y-1.5 bg-zinc-900/60 p-3 rounded-xl border border-zinc-800">
+        <div className="flex items-center gap-1.5 font-semibold text-white">
+          <Crosshair className="w-3.5 h-3.5 text-amber-400" />
           <span>Exposure Light Metering Mode</span>
         </div>
-        <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800 text-[11px] justify-between gap-1">
+        <div className="flex bg-zinc-950 p-1 rounded-lg border border-zinc-800 text-[11px] justify-between gap-1">
           <button
             onClick={() => onChangeSettings({ ...settings, meteringMode: 'matrix' })}
             className={`flex-1 py-1 rounded transition-colors ${
-              settings.meteringMode === 'matrix' ? 'bg-emerald-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              settings.meteringMode === 'matrix' ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             Matrix / Evaluative
@@ -117,7 +117,7 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
           <button
             onClick={() => onChangeSettings({ ...settings, meteringMode: 'center_weighted' })}
             className={`flex-1 py-1 rounded transition-colors ${
-              settings.meteringMode === 'center_weighted' ? 'bg-emerald-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              settings.meteringMode === 'center_weighted' ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             Center-Weighted
@@ -125,7 +125,7 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
           <button
             onClick={() => onChangeSettings({ ...settings, meteringMode: 'spot' })}
             className={`flex-1 py-1 rounded transition-colors ${
-              settings.meteringMode === 'spot' ? 'bg-emerald-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-800'
+              settings.meteringMode === 'spot' ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             Spot Metering
@@ -136,14 +136,14 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
       {/* Optical Depth of Field Calculator */}
       <DofCalculatorWidget settings={settings} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-zinc-800">
         {/* 1. Depth of Field / Aperture */}
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-[11px]">
-            <span className="text-slate-300 flex items-center gap-1 font-medium">
-              <Eye className="w-3.5 h-3.5 text-purple-400" /> Aperture (Bokeh Blur)
+            <span className="text-zinc-300 flex items-center gap-1 font-medium">
+              <Eye className="w-3.5 h-3.5 text-amber-400" /> Aperture (Bokeh Blur)
             </span>
-            <span className="font-mono text-purple-300 font-bold">f/{settings.aperture.toFixed(1)}</span>
+            <span className="font-mono text-amber-300 font-bold">f/{settings.aperture.toFixed(1)}</span>
           </div>
           <Slider
             value={[settings.aperture]}
@@ -153,15 +153,12 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
             onValueChange={([val]) => onChangeSettings({ ...settings, aperture: val })}
             className="cursor-pointer"
           />
-          <p className="text-[10px] text-slate-400">
-            {settings.aperture <= 2.8 ? 'Soft background blur (Great for Portraits)' : 'Sharp deep focus (Great for Landscapes)'}
-          </p>
         </div>
 
         {/* 2. Subject Distance */}
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-[11px]">
-            <span className="text-slate-300 flex items-center gap-1 font-medium">
+            <span className="text-zinc-300 flex items-center gap-1 font-medium">
               <Ruler className="w-3.5 h-3.5 text-amber-400" /> Subject Distance
             </span>
             <span className="font-mono text-amber-300 font-bold">{settings.subjectDistance.toFixed(1)} m</span>
@@ -179,7 +176,7 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
         {/* 3. White Balance Temperature */}
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-[11px]">
-            <span className="text-slate-300 flex items-center gap-1 font-medium">
+            <span className="text-zinc-300 flex items-center gap-1 font-medium">
               <Flame className="w-3.5 h-3.5 text-amber-400" /> Color Temp (WB)
             </span>
             <span className="font-mono text-amber-300 font-bold">{settings.whiteBalance}K</span>
@@ -197,10 +194,10 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
         {/* 4. Exposure Compensation EV */}
         <div className="space-y-1.5">
           <div className="flex justify-between items-center text-[11px]">
-            <span className="text-slate-300 flex items-center gap-1 font-medium">
-              <Sun className="w-3.5 h-3.5 text-emerald-400" /> Exposure EV
+            <span className="text-zinc-300 flex items-center gap-1 font-medium">
+              <Sun className="w-3.5 h-3.5 text-amber-400" /> Exposure EV
             </span>
-            <span className="font-mono text-emerald-300 font-bold">
+            <span className="font-mono text-amber-300 font-bold">
               {settings.exposureEv > 0 ? `+${settings.exposureEv.toFixed(1)}` : settings.exposureEv.toFixed(1)} EV
             </span>
           </div>
@@ -215,12 +212,12 @@ export const ManualControls: React.FC<ManualControlsProps> = ({ settings, onChan
         </div>
 
         {/* 5. ISO Speed */}
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 sm:col-span-2">
           <div className="flex justify-between items-center text-[11px]">
-            <span className="text-slate-300 flex items-center gap-1 font-medium">
-              <Gauge className="w-3.5 h-3.5 text-blue-400" /> ISO Sensitivity
+            <span className="text-zinc-300 flex items-center gap-1 font-medium">
+              <Gauge className="w-3.5 h-3.5 text-amber-400" /> ISO Sensitivity
             </span>
-            <span className="font-mono text-blue-300 font-bold">ISO {settings.iso}</span>
+            <span className="font-mono text-amber-300 font-bold">ISO {settings.iso}</span>
           </div>
           <Slider
             value={[settings.iso]}

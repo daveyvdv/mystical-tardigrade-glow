@@ -33,15 +33,15 @@ export const CameraShutterBar: React.FC<CameraShutterBarProps> = ({
           variant="outline"
           size="sm"
           onClick={() => setUseLiveWebcam(!useLiveWebcam)}
-          className="h-9 text-xs bg-slate-800 border-slate-700 text-slate-200"
+          className="h-9 text-xs bg-zinc-900 border-amber-500/30 text-white hover:bg-zinc-800"
         >
           {useLiveWebcam ? (
             <>
-              <Camera className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Live WebCam
+              <Camera className="w-3.5 h-3.5 mr-1 text-amber-400" /> Live WebCam
             </>
           ) : (
             <>
-              <ImageIcon className="w-3.5 h-3.5 mr-1 text-amber-400" /> Practice Scene
+              <ImageIcon className="w-3.5 h-3.5 mr-1 text-amber-300" /> Practice Scene
             </>
           )}
         </Button>
@@ -51,9 +51,9 @@ export const CameraShutterBar: React.FC<CameraShutterBarProps> = ({
             variant="outline"
             size="sm"
             onClick={onTriggerFileUpload}
-            className="h-9 text-xs bg-slate-800 border-slate-700 text-purple-300 hover:text-purple-200"
+            className="h-9 text-xs bg-zinc-900 border-amber-500/30 text-amber-300 hover:text-white"
           >
-            <Upload className="w-3.5 h-3.5 mr-1 text-purple-400" /> Upload Image
+            <Upload className="w-3.5 h-3.5 mr-1 text-amber-400" /> Upload Image
           </Button>
         )}
 
@@ -62,7 +62,7 @@ export const CameraShutterBar: React.FC<CameraShutterBarProps> = ({
             variant="outline"
             size="sm"
             onClick={() => setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'))}
-            className="h-9 w-9 p-0 bg-slate-800 border-slate-700 text-slate-300"
+            className="h-9 w-9 p-0 bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white"
           >
             <SwitchCamera className="w-4 h-4" />
           </Button>
@@ -75,10 +75,10 @@ export const CameraShutterBar: React.FC<CameraShutterBarProps> = ({
         disabled={isCapturing || countdown !== null}
         data-testid="shutter-button"
         aria-label="Capture photo"
-        className="group relative w-14 h-14 rounded-full bg-slate-900 border-4 border-emerald-400 p-1 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all duration-150 disabled:opacity-50"
+        className="group relative w-14 h-14 rounded-full bg-zinc-950 border-4 border-amber-400 p-1 flex items-center justify-center shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:scale-105 active:scale-95 transition-all duration-150 disabled:opacity-50"
       >
-        <div className="w-full h-full rounded-full bg-emerald-500 group-hover:bg-emerald-400 transition-colors flex items-center justify-center">
-          <Camera className="w-6 h-6 text-slate-950" />
+        <div className="w-full h-full rounded-full bg-amber-400 group-hover:bg-amber-300 transition-colors flex items-center justify-center">
+          <Camera className="w-6 h-6 text-zinc-950" />
         </div>
       </button>
 
@@ -87,7 +87,7 @@ export const CameraShutterBar: React.FC<CameraShutterBarProps> = ({
           variant="outline"
           size="sm"
           onClick={onOpenAchievements}
-          className="h-9 text-xs bg-slate-800 border-slate-700 text-amber-300 hover:bg-slate-700"
+          className="h-9 text-xs bg-zinc-900 border-amber-500/30 text-amber-300 hover:bg-zinc-800 hover:text-white"
         >
           <Award className="w-3.5 h-3.5 mr-1 text-amber-400" />
           Badges
@@ -97,7 +97,7 @@ export const CameraShutterBar: React.FC<CameraShutterBarProps> = ({
           variant="outline"
           size="sm"
           onClick={onStraighten}
-          className="h-9 text-xs bg-slate-800 border-slate-700 text-slate-300 hover:text-emerald-300"
+          className="h-9 text-xs bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white"
         >
           <RotateCcw className="w-3.5 h-3.5 mr-1" />
           Straighten

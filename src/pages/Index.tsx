@@ -67,7 +67,7 @@ const Index: React.FC = () => {
       : 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-col font-sans">
       <Header
         photoCount={photos.length}
         averageScore={averageScore}
@@ -131,7 +131,7 @@ const Index: React.FC = () => {
         achievements={achievements}
       />
 
-      <footer className="border-t border-slate-800/80 py-4 mt-8">
+      <footer className="border-t border-zinc-800/80 py-4 mt-8">
         <MadeWithDyad />
       </footer>
     </div>

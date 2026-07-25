@@ -1,6 +1,6 @@
 import React from 'react';
 import { FilmPresetType, LightDirectionType, AspectRatioType } from '../types/camera';
-import { Film, Sun, Crop, Palette } from 'lucide-react';
+import { Sun, Crop, Palette } from 'lucide-react';
 
 interface FilmPresetSelectorProps {
   filmPreset: FilmPresetType;
@@ -20,10 +20,10 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
   onSelectLightDirection,
 }) => {
   return (
-    <div className="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 text-xs text-slate-200 space-y-3">
+    <div className="bg-zinc-950/90 border border-zinc-800 rounded-xl p-3 text-xs text-white space-y-3">
       {/* 1. Film Look Presets */}
       <div className="space-y-1.5">
-        <div className="flex items-center gap-1.5 font-semibold text-slate-300">
+        <div className="flex items-center gap-1.5 font-semibold text-zinc-200">
           <Palette className="w-3.5 h-3.5 text-amber-400" />
           <span>Film Profile Emulation</span>
         </div>
@@ -31,7 +31,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
           <button
             onClick={() => onSelectPreset('standard')}
             className={`px-2 py-1.5 rounded border text-[11px] font-medium transition-all ${
-              filmPreset === 'standard' ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              filmPreset === 'standard' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             Natural
@@ -39,7 +39,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
           <button
             onClick={() => onSelectPreset('monochrome')}
             className={`px-2 py-1.5 rounded border text-[11px] font-medium transition-all ${
-              filmPreset === 'monochrome' ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              filmPreset === 'monochrome' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             B&W Noir
@@ -47,7 +47,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
           <button
             onClick={() => onSelectPreset('kodachrome')}
             className={`px-2 py-1.5 rounded border text-[11px] font-medium transition-all ${
-              filmPreset === 'kodachrome' ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              filmPreset === 'kodachrome' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             Kodachrome
@@ -55,7 +55,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
           <button
             onClick={() => onSelectPreset('teal_orange')}
             className={`px-2 py-1.5 rounded border text-[11px] font-medium transition-all ${
-              filmPreset === 'teal_orange' ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              filmPreset === 'teal_orange' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             Teal & Orange
@@ -63,7 +63,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
           <button
             onClick={() => onSelectPreset('pastel_portrait')}
             className={`px-2 py-1.5 rounded border text-[11px] font-medium transition-all ${
-              filmPreset === 'pastel_portrait' ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              filmPreset === 'pastel_portrait' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             Pastel Glow
@@ -71,7 +71,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
           <button
             onClick={() => onSelectPreset('fuji_vivid')}
             className={`px-2 py-1.5 rounded border text-[11px] font-medium transition-all ${
-              filmPreset === 'fuji_vivid' ? 'bg-emerald-600 border-emerald-400 text-white' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+              filmPreset === 'fuji_vivid' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800'
             }`}
           >
             Fuji Vivid
@@ -79,20 +79,20 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-zinc-800">
         {/* 2. Aspect Ratio Selector */}
         <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-300">
-            <Crop className="w-3.5 h-3.5 text-purple-400" />
+          <div className="flex items-center gap-1.5 font-semibold text-zinc-200">
+            <Crop className="w-3.5 h-3.5 text-amber-400" />
             <span>Frame Aspect Ratio</span>
           </div>
-          <div className="flex bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs justify-between">
+          <div className="flex bg-zinc-900 p-0.5 rounded-lg border border-zinc-800 text-xs justify-between">
             {(['3:2', '4:5', '1:1', '16:9', '2.39:1'] as AspectRatioType[]).map((ratio) => (
               <button
                 key={ratio}
                 onClick={() => onSelectAspectRatio(ratio)}
                 className={`px-2 py-1 rounded text-[11px] font-mono transition-colors ${
-                  aspectRatio === ratio ? 'bg-purple-600 text-white font-bold' : 'text-slate-300 hover:text-white'
+                  aspectRatio === ratio ? 'bg-amber-500 text-zinc-950 font-bold' : 'text-zinc-300 hover:text-white'
                 }`}
               >
                 {ratio}
@@ -103,7 +103,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
 
         {/* 3. Light Direction Simulator */}
         <div className="space-y-1.5">
-          <div className="flex items-center gap-1.5 font-semibold text-slate-300">
+          <div className="flex items-center gap-1.5 font-semibold text-zinc-200">
             <Sun className="w-3.5 h-3.5 text-amber-400" />
             <span>Light Angle Simulation</span>
           </div>
@@ -111,7 +111,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
             <button
               onClick={() => onSelectLightDirection('golden_hour')}
               className={`px-2 py-1 rounded border transition-colors ${
-                lightDirection === 'golden_hour' ? 'bg-amber-600 border-amber-400 text-white font-semibold' : 'bg-slate-800 border-slate-700 text-slate-300'
+                lightDirection === 'golden_hour' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300'
               }`}
             >
               🌅 Golden Sunset
@@ -119,7 +119,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
             <button
               onClick={() => onSelectLightDirection('soft_side')}
               className={`px-2 py-1 rounded border transition-colors ${
-                lightDirection === 'soft_side' ? 'bg-amber-600 border-amber-400 text-white font-semibold' : 'bg-slate-800 border-slate-700 text-slate-300'
+                lightDirection === 'soft_side' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300'
               }`}
             >
               🪟 Soft Window Light
@@ -127,7 +127,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
             <button
               onClick={() => onSelectLightDirection('midday_harsh')}
               className={`px-2 py-1 rounded border transition-colors ${
-                lightDirection === 'midday_harsh' ? 'bg-amber-600 border-amber-400 text-white font-semibold' : 'bg-slate-800 border-slate-700 text-slate-300'
+                lightDirection === 'midday_harsh' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300'
               }`}
             >
               ☀️ Midday Sun (Harsh)
@@ -135,7 +135,7 @@ export const FilmPresetSelector: React.FC<FilmPresetSelectorProps> = ({
             <button
               onClick={() => onSelectLightDirection('backlit')}
               className={`px-2 py-1 rounded border transition-colors ${
-                lightDirection === 'backlit' ? 'bg-amber-600 border-amber-400 text-white font-semibold' : 'bg-slate-800 border-slate-700 text-slate-300'
+                lightDirection === 'backlit' ? 'bg-amber-500 border-amber-400 text-zinc-950 font-bold' : 'bg-zinc-900 border-zinc-800 text-zinc-300'
               }`}
             >
               ✨ Backlit Rim Light
