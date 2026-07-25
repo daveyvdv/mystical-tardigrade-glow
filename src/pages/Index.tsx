@@ -46,6 +46,13 @@ const Index: React.FC = () => {
     );
   };
 
+  const handleSaveEditedPhoto = (updatedPhoto: CapturedPhoto) => {
+    setPhotos((prev) =>
+      prev.map((p) => (p.id === updatedPhoto.id ? updatedPhoto : p))
+    );
+    setActivePhoto(updatedPhoto);
+  };
+
   const handleClearAll = () => {
     setPhotos([]);
     showSuccess("Gallery cleared.");
@@ -109,6 +116,7 @@ const Index: React.FC = () => {
         onClose={() => setActivePhoto(null)}
         onDelete={handleDeletePhoto}
         onUpdateNotes={handleUpdateNotes}
+        onSaveEditedPhoto={handleSaveEditedPhoto}
       />
 
       {/* Side-by-side Photo Comparison Dialog */}
