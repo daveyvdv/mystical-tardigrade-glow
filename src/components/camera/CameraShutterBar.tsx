@@ -73,6 +73,8 @@ export const CameraShutterBar: React.FC<CameraShutterBarProps> = ({
       <button
         onClick={onShutter}
         disabled={isCapturing || countdown !== null}
+        data-testid="shutter-button"
+        aria-label="Capture photo"
         className="group relative w-14 h-14 rounded-full bg-slate-900 border-4 border-emerald-400 p-1 flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all duration-150 disabled:opacity-50"
       >
         <div className="w-full h-full rounded-full bg-emerald-500 group-hover:bg-emerald-400 transition-colors flex items-center justify-center">
